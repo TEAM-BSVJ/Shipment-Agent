@@ -1,0 +1,15 @@
+# Intermediates & temporary runtime files (never commit)
+.tmp/*
+!.tmp/.gitkeep
+
+# Secrets and authentication credentials
+.env
+credentials.json
+token.json
+
+# Python virtual environment and bytecode
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/

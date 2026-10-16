@@ -66,7 +66,7 @@ class MilestoneResponse(MilestoneBase):
     shipment_id: UUID
     completed_at: Optional[datetime] = None
     is_completed: bool = False
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: Optional[datetime] = Field(default_factory=datetime.utcnow)
 
 
 # ---------------------------------------------------------------------------

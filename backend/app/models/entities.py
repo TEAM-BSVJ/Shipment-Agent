@@ -116,7 +116,7 @@ class ShipmentMilestone(Base, UUIDPrimaryKeyMixin):
     completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     is_completed: Mapped[bool] = mapped_column(Boolean, default=False, index=True, nullable=False)
     source: Mapped[str] = mapped_column(String(64), default="INTERNAL_TMS", nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow, server_default=func.now(), nullable=False)
 
     shipment: Mapped["Shipment"] = relationship("Shipment", back_populates="milestones")
 

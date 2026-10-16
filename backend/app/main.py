@@ -12,6 +12,7 @@ from typing import Any, AsyncGenerator, Dict
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from backend.app.api.v1.router import api_v1_router
 from backend.app.config import get_settings
 
 settings = get_settings()
@@ -54,6 +55,9 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    # Mount API v1 Routers
+    application.include_router(api_v1_router, prefix=settings.API_V1_PREFIX)
 
     @application.get("/health", tags=["System"])
     async def health_check() -> Dict[str, Any]:

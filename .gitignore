@@ -14,6 +14,8 @@ __pycache__/
 venv/
 env/
 
+evolusworkflow.md
+en.md
 AGENT.md
 Architecture.md
 CLAUDE.md

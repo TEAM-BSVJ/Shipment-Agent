@@ -101,8 +101,8 @@ class DocumentResponse(DomainBaseModel):
     validation_status: DocumentValidationStatus = DocumentValidationStatus.PENDING
     validated_by: Optional[UUID] = None
     expiry_date: Optional[date] = None
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: Optional[datetime] = Field(default_factory=datetime.utcnow)
+    updated_at: Optional[datetime] = Field(default_factory=datetime.utcnow)
 
 
 # ---------------------------------------------------------------------------
@@ -135,8 +135,8 @@ class ShipmentResponse(ShipmentBase):
     status: ShipmentStatus = ShipmentStatus.BOOKED
     risk_score: int = Field(default=0, ge=0, le=100)
     risk_level: RiskLevel = RiskLevel.LOW
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: Optional[datetime] = Field(default_factory=datetime.utcnow)
+    updated_at: Optional[datetime] = Field(default_factory=datetime.utcnow)
     milestones: List[MilestoneResponse] = Field(default_factory=list)
     documents: List[DocumentResponse] = Field(default_factory=list)
 
@@ -189,9 +189,9 @@ class ExceptionResponse(DomainBaseModel):
     risk_level: RiskLevel
     status: ExceptionStatus = ExceptionStatus.OPEN
     description: str
-    evidence: List[str] = Field(default_factory=list)
+    evidence: Optional[List[str]] = Field(default_factory=list)
     root_cause: Optional[str] = None
-    detected_at: datetime = Field(default_factory=datetime.utcnow)
+    detected_at: Optional[datetime] = Field(default_factory=datetime.utcnow)
     resolved_at: Optional[datetime] = None
     resolved_by: Optional[UUID] = None
 

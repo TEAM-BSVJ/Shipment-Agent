@@ -1,6 +1,7 @@
 # Core Web Framework & Server
 fastapi>=0.110.0
 uvicorn[standard]>=0.28.0
+python-multipart>=0.0.9
 
 # Data Validation & Settings Management
 pydantic>=2.6.0

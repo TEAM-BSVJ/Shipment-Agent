@@ -32,3 +32,5 @@ AGENTS.md
 .tmp
 directives
 execution
+data/
+HANDOVER.md

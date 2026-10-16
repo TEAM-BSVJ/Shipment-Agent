@@ -148,20 +148,25 @@ async def handle_create_correction_task(
     if session is not None:
         action = CorrectiveAction(
             id=action_id,
-            shipment_id=shipment_id,
-            exception_id=exception_id,
-            action_type=action_type.value,
-            description=description,
+            exception_id=exception_id or uuid.uuid4(),
+            action_type=action_type.value if hasattr(action_type, "value") else str(action_type),
             status=ActionStatus.PENDING.value,
-            assigned_to=assigned_to,
-            requires_approval=False,
-            tenant_id=tenant_id or uuid.uuid4(),
+            tool_used=ToolName.CREATE_CORRECTION_TASK.value,
+            input_data={
+                "shipment_id": str(shipment_id),
+                "description": description,
+                "assigned_to": assigned_to,
+                "priority": priority.value if hasattr(priority, "value") else str(priority),
+            },
+            idempotency_key=f"ca-task-{action_id}",
+            created_at=datetime.utcnow(),
         )
         session.add(action)
         await session.flush()
 
         # Audit record
         audit = AuditLog(
+            id=uuid.uuid4(),
             entity_type="CorrectiveAction",
             entity_id=action_id,
             action="CREATE_CORRECTION_TASK",
@@ -169,11 +174,10 @@ async def handle_create_correction_task(
             actor_id="Evolus-Gemma4-Agent",
             details={
                 "shipment_id": str(shipment_id),
-                "action_type": action_type.value,
+                "action_type": action_type.value if hasattr(action_type, "value") else str(action_type),
                 "description": description,
                 "assigned_to": assigned_to,
             },
-            tenant_id=tenant_id or action.tenant_id,
         )
         session.add(audit)
         await session.flush()
@@ -286,7 +290,6 @@ async def handle_send_notification(
             status=NotificationStatus.SENT.value,
             idempotency_key=idempotency_key,
             sent_at=datetime.utcnow(),
-            tenant_id=tenant_id or uuid.uuid4(),
         )
         session.add(notif)
         await session.flush()
@@ -406,7 +409,6 @@ async def handle_escalate_to_human(
                 "reason": reason,
                 "urgency": urgency.value,
             },
-            tenant_id=tenant_id or uuid.uuid4(),
         )
         session.add(audit)
         await session.flush()

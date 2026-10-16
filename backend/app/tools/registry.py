@@ -119,7 +119,7 @@ class ToolExecutionContext(BaseModel):
     """Execution context passed through tool invocations."""
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    session: Optional[AsyncSession] = None
+    session: Optional[Any] = None
     tenant_id: Optional[uuid.UUID] = None
     call_count: int = 0
     is_approved: bool = False

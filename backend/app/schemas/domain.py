@@ -313,3 +313,17 @@ class AgentAnalysisResponse(DomainBaseModel):
     action_queued: bool
     requires_human_approval: bool
     execution_time_seconds: float
+
+
+class AgentChatRequest(DomainBaseModel):
+    shipment_id: Optional[UUID] = None
+    message: str = Field(..., min_length=1, max_length=2000)
+    conversation_history: List[Dict[str, str]] = Field(default_factory=list)
+
+
+class AgentChatResponse(DomainBaseModel):
+    response: str
+    shipment_id: Optional[UUID] = None
+    grounded_facts: List[str] = Field(default_factory=list)
+    recommended_action: Optional[str] = None
+

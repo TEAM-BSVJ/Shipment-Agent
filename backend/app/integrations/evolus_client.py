@@ -193,25 +193,6 @@ class EvolusClient:
                 confidence=0.98,
             )
 
-        elif "milestone_overdue" in lower or "overdue" in lower or "dispatch" in lower:
-            return AgentDiagnosticOutput(
-                issue_type="MILESTONE_OVERDUE",
-                root_cause="Milestone WAREHOUSE_DISPATCH is overdue by more than 3 hours without carrier gate-out confirmation.",
-                evidence=[
-                    "Milestone expected_at has elapsed without actual_at timestamp",
-                    "No telematics GPS ping received from carrier MOCK_CARRIER_01",
-                ],
-                recommended_action="Reschedule milestone expected timestamp and notify operations coordinator.",
-                tool_name=ToolName.RESCHEDULE_MILESTONE,
-                tool_input={
-                    "shipment_id": str(uuid.uuid4()),
-                    "milestone_id": str(uuid.uuid4()),
-                    "reason": "Warehouse dispatch delayed due to outbound dock congestion",
-                },
-                risk_level=RiskLevel.MEDIUM,
-                confidence=0.92,
-            )
-
         elif "missing_document" in lower or "missing" in lower:
             return AgentDiagnosticOutput(
                 issue_type="MISSING_DOCUMENT",
@@ -229,6 +210,25 @@ class EvolusClient:
                 },
                 risk_level=RiskLevel.HIGH,
                 confidence=0.95,
+            )
+
+        elif "milestone_overdue" in lower or "overdue" in lower:
+            return AgentDiagnosticOutput(
+                issue_type="MILESTONE_OVERDUE",
+                root_cause="Milestone WAREHOUSE_DISPATCH is overdue by more than 3 hours without carrier gate-out confirmation.",
+                evidence=[
+                    "Milestone expected_at has elapsed without actual_at timestamp",
+                    "No telematics GPS ping received from carrier MOCK_CARRIER_01",
+                ],
+                recommended_action="Reschedule milestone expected timestamp and notify operations coordinator.",
+                tool_name=ToolName.RESCHEDULE_MILESTONE,
+                tool_input={
+                    "shipment_id": str(uuid.uuid4()),
+                    "milestone_id": str(uuid.uuid4()),
+                    "reason": "Warehouse dispatch delayed due to outbound dock congestion",
+                },
+                risk_level=RiskLevel.MEDIUM,
+                confidence=0.92,
             )
 
         return AgentDiagnosticOutput(

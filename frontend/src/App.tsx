@@ -9,6 +9,7 @@ import {
 import { AppLayout, NavTab } from './components/layout';
 import { StatusBadge } from './components/common';
 import { Dashboard } from './pages/Dashboard';
+import { ShipmentDetail } from './pages/ShipmentDetail';
 import { Shipment } from './types';
 
 export default function App() {
@@ -18,7 +19,6 @@ export default function App() {
 
   const handleSelectShipment = (shipment: Shipment) => {
     setSelectedShipment(shipment);
-    // Prepared for Milestone 6.5 Shipment Detail View
   };
 
   const handleAnalyzeShipment = (shipment: Shipment) => {
@@ -38,12 +38,22 @@ export default function App() {
       onOpenChat={() => setIsChatOpen(true)}
     >
       {/* Active Tab View */}
-      {activeTab === 'dashboard' && (
-        <Dashboard
-          onSelectShipment={handleSelectShipment}
-          onAnalyzeShipment={handleAnalyzeShipment}
-        />
-      )}
+      {activeTab === 'dashboard' &&
+        (selectedShipment ? (
+          <ShipmentDetail
+            shipmentId={selectedShipment.id}
+            onBack={() => setSelectedShipment(null)}
+            onOpenChat={(s) => {
+              setSelectedShipment(s);
+              setIsChatOpen(true);
+            }}
+          />
+        ) : (
+          <Dashboard
+            onSelectShipment={handleSelectShipment}
+            onAnalyzeShipment={handleAnalyzeShipment}
+          />
+        ))}
 
       {activeTab === 'exceptions' && (
         <div className="space-y-4">
@@ -125,8 +135,8 @@ export default function App() {
         </div>
       )}
 
-      {/* Selected Shipment Quick Peek Banner */}
-      {selectedShipment && (
+      {/* Selected Shipment Quick Peek Banner (shown when navigating away from dashboard) */}
+      {selectedShipment && activeTab !== 'dashboard' && (
         <div className="fixed bottom-6 right-6 bg-slate-900 text-white rounded-md p-4 shadow-xl z-30 max-w-md border border-slate-800 animate-in fade-in slide-in-from-bottom-2">
           <div className="flex items-start justify-between gap-4">
             <div>

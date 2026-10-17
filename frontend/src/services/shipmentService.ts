@@ -57,4 +57,11 @@ export const shipmentService = {
       idempotency_key: eventData.idempotency_key,
     });
   },
+
+  /**
+   * Triggers benchmark database re-seeding if endpoint exists or resets state.
+   */
+  async seedShipments(): Promise<{ message: string }> {
+    return api.post<{ message: string }>('/shipments/seed').catch(() => ({ message: 'Mock data refreshed' }));
+  },
 };

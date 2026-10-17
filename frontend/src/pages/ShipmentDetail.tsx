@@ -2,24 +2,24 @@ import React, { useEffect, useState } from 'react';
 import {
   AlertTriangle,
   ArrowLeft,
-  Bot,
+  Sparkles,
   Calendar,
-  CheckCircle2,
   Clock,
   FileText,
   MapPin,
   RefreshCw,
-  ShieldAlert,
-  Sparkles,
+  Flame,
   Truck,
+  ShieldCheck,
 } from 'lucide-react';
 import {
   AgentAnalysisResponse,
   Shipment,
 } from '../types';
 import { agentService, shipmentService } from '../services';
-import { Button, MetricCard, StatusBadge } from '../components/common';
+import { Button, MetricCard, StatusBadge, EvidenceCard } from '../components/common';
 import { DocumentPanel, MilestoneTimeline } from '../components/shipment';
+import { BENCHMARK_SHIPMENTS } from './Dashboard';
 
 interface ShipmentDetailProps {
   shipmentId: string;
@@ -195,10 +195,12 @@ export const ShipmentDetail: React.FC<ShipmentDetailProps> = ({
       if (res) {
         setShipment(res);
       } else {
-        setShipment(DETAILED_BENCHMARK_SHIPMENTS[shipmentId] || null);
+        const fallback = DETAILED_BENCHMARK_SHIPMENTS[shipmentId] || BENCHMARK_SHIPMENTS.find(s => s.id === shipmentId) || null;
+        setShipment(fallback);
       }
     } catch {
-      setShipment(DETAILED_BENCHMARK_SHIPMENTS[shipmentId] || null);
+      const fallback = DETAILED_BENCHMARK_SHIPMENTS[shipmentId] || BENCHMARK_SHIPMENTS.find(s => s.id === shipmentId) || null;
+      setShipment(fallback);
     } finally {
       setIsLoading(false);
     }
@@ -228,19 +230,23 @@ export const ShipmentDetail: React.FC<ShipmentDetailProps> = ({
 
   if (isLoading) {
     return (
-      <div className="p-8 text-center bg-white border border-slate-200 rounded-md">
-        <RefreshCw className="w-6 h-6 animate-spin text-blue-600 mx-auto mb-2" />
-        <p className="text-xs text-slate-500">Loading shipment corridors and milestone records...</p>
+      <div className="p-8 text-center bg-navy-900 border border-navy-700 rounded-md">
+        <RefreshCw className="w-6 h-6 animate-spin text-cyan-400 mx-auto mb-2" />
+        <p className="text-xs text-slateText-secondary font-mono">
+          Loading shipment telemetry, milestone timeline, and paperwork...
+        </p>
       </div>
     );
   }
 
   if (!shipment) {
     return (
-      <div className="p-8 text-center bg-white border border-slate-200 rounded-md">
-        <AlertTriangle className="w-8 h-8 text-red-500 mx-auto mb-2" />
-        <h4 className="text-sm font-bold text-slate-800">Shipment Not Found</h4>
-        <p className="text-xs text-slate-500 mt-1">The requested shipment UUID could not be resolved.</p>
+      <div className="p-8 text-center bg-navy-900 border border-navy-700 rounded-md">
+        <AlertTriangle className="w-8 h-8 text-coral-400 mx-auto mb-2" />
+        <h4 className="text-sm font-bold text-white font-mono">Shipment Record Not Found</h4>
+        <p className="text-xs text-slateText-secondary mt-1">
+          The requested shipment UUID could not be resolved in the database.
+        </p>
         <Button variant="secondary" size="sm" onClick={onBack} className="mt-4">
           Return to Dashboard
         </Button>
@@ -249,22 +255,22 @@ export const ShipmentDetail: React.FC<ShipmentDetailProps> = ({
   }
 
   return (
-    <div className="space-y-6">
-      {/* Navigation & Header Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
+    <div className="space-y-5">
+      {/* Top Navigation & Header HUD Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-navy-700">
         <div className="flex items-center gap-3">
           <Button
             variant="ghost"
             size="sm"
             leftIcon={<ArrowLeft className="w-4 h-4" />}
             onClick={onBack}
-            className="text-slate-600 hover:text-slate-900"
+            className="text-slateText-muted hover:text-cyan-400 font-mono"
           >
-            Dashboard
+            Back
           </Button>
-          <div className="h-4 w-px bg-slate-300" />
-          <div className="flex items-center gap-2">
-            <h2 className="text-xl font-bold font-mono text-slate-900 tracking-tight">
+          <div className="h-4 w-px bg-navy-700" />
+          <div className="flex items-center gap-2.5">
+            <h2 className="text-xl font-bold font-mono text-cyan-400 tracking-tight">
               {shipment.tracking_number}
             </h2>
             <StatusBadge status={shipment.status} />
@@ -280,12 +286,11 @@ export const ShipmentDetail: React.FC<ShipmentDetailProps> = ({
             leftIcon={<Sparkles className="w-4 h-4" />}
             onClick={handleRunDiagnosis}
           >
-            Analyze with Agent (Gemma 4)
+            Analyze with Evolus AI
           </Button>
           <Button
             variant="secondary"
             size="sm"
-            leftIcon={<Bot className="w-4 h-4 text-violet-600" />}
             onClick={() => onOpenChat(shipment)}
           >
             Open Copilot
@@ -293,44 +298,48 @@ export const ShipmentDetail: React.FC<ShipmentDetailProps> = ({
         </div>
       </div>
 
-      {/* Corridor Overview Cards */}
+      {/* Corridor Overview HUD Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard
           title="Transport Corridor"
           value={`${shipment.origin.split(',')[0]} → ${shipment.destination.split(',')[0]}`}
-          icon={<MapPin className="w-4 h-4 text-blue-600" />}
+          icon={<MapPin className="w-4 h-4 text-cyan-400" />}
           subtext={`${shipment.mode} Freight | ${shipment.carrier_id}`}
+          alertVariant="cyan"
         />
         <MetricCard
           title="Calculated Risk Score"
           value={`${shipment.risk_score} / 100`}
-          icon={<ShieldAlert className="w-4 h-4 text-red-600" />}
+          icon={<Flame className="w-4 h-4 text-coral-400" />}
           subtext={`Tier: ${shipment.risk_level}`}
-          alertVariant={shipment.risk_level === 'CRITICAL' ? 'danger' : 'warning'}
+          deltaText={shipment.risk_score >= 60 ? 'CRITICAL DELTA' : 'NOMINAL'}
+          deltaVariant={shipment.risk_score >= 60 ? 'negative' : 'positive'}
+          alertVariant={shipment.risk_score >= 60 ? 'danger' : 'warning'}
         />
         <MetricCard
           title="Promised Delivery"
           value={shipment.promised_delivery_date}
-          icon={<Calendar className="w-4 h-4 text-slate-600" />}
+          icon={<Calendar className="w-4 h-4 text-slateText-muted" />}
           subtext="Contractual SLA target"
+          alertVariant="neutral"
         />
         <MetricCard
-          title="Priority Classification"
+          title="Business Priority"
           value={shipment.business_priority}
-          icon={<Clock className="w-4 h-4 text-violet-600" />}
+          icon={<Clock className="w-4 h-4 text-violet-400" />}
           subtext="Multi-tenant isolation active"
           alertVariant="agent"
         />
       </div>
 
       {/* Navigation Sub-Tabs */}
-      <div className="flex border-b border-slate-200">
+      <div className="flex border-b border-navy-700 bg-navy-900 rounded-t-md px-2">
         <button
           onClick={() => setActiveTab('journey')}
-          className={`py-2.5 px-4 text-xs font-semibold border-b-2 transition-colors flex items-center gap-2 ${
+          className={`py-3 px-4 text-xs font-semibold border-b-2 transition-colors flex items-center gap-2 font-mono ${
             activeTab === 'journey'
-              ? 'border-blue-600 text-blue-600'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
+              ? 'border-cyan-400 text-cyan-400 font-bold'
+              : 'border-transparent text-slateText-secondary hover:text-white'
           }`}
         >
           <Truck className="w-3.5 h-3.5" />
@@ -339,10 +348,10 @@ export const ShipmentDetail: React.FC<ShipmentDetailProps> = ({
 
         <button
           onClick={() => setActiveTab('documents')}
-          className={`py-2.5 px-4 text-xs font-semibold border-b-2 transition-colors flex items-center gap-2 ${
+          className={`py-3 px-4 text-xs font-semibold border-b-2 transition-colors flex items-center gap-2 font-mono ${
             activeTab === 'documents'
-              ? 'border-blue-600 text-blue-600'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
+              ? 'border-cyan-400 text-cyan-400 font-bold'
+              : 'border-transparent text-slateText-secondary hover:text-white'
           }`}
         >
           <FileText className="w-3.5 h-3.5" />
@@ -351,29 +360,31 @@ export const ShipmentDetail: React.FC<ShipmentDetailProps> = ({
 
         <button
           onClick={() => setActiveTab('diagnosis')}
-          className={`py-2.5 px-4 text-xs font-semibold border-b-2 transition-colors flex items-center gap-2 ${
+          className={`py-3 px-4 text-xs font-semibold border-b-2 transition-colors flex items-center gap-2 font-mono ${
             activeTab === 'diagnosis'
-              ? 'border-violet-600 text-violet-600 font-bold'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
+              ? 'border-violet-400 text-violet-300 font-bold shadow-glow-violet'
+              : 'border-transparent text-slateText-secondary hover:text-white'
           }`}
         >
-          <Bot className="w-3.5 h-3.5 text-violet-600" />
+          <Sparkles className="w-3.5 h-3.5 text-violet-400" />
           Gemma 4 Diagnostic Reasoner
           {latestAnalysis && (
-            <span className="w-2 h-2 rounded-full bg-violet-600 animate-pulse" />
+            <span className="w-2 h-2 rounded-full bg-violet-400 animate-pulse" />
           )}
         </button>
       </div>
 
       {/* Tab Panels */}
-      <div className="bg-white border border-slate-200 rounded-md p-6 shadow-sm">
+      <div className="bg-navy-900 border border-navy-700 rounded-b-md p-6 shadow-md">
         {activeTab === 'journey' && (
           <div className="space-y-4">
-            <div className="pb-3 border-b border-slate-100 flex items-center justify-between">
+            <div className="pb-3 border-b border-navy-700/60 flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-bold text-slate-900">Milestone Execution Progress</h3>
-                <p className="text-xs text-slate-500">
-                  Actual scans versus promised SLA cutoffs.
+                <h3 className="text-sm font-bold text-white font-mono">
+                  Milestone Execution Telemetry
+                </h3>
+                <p className="text-xs text-slateText-secondary">
+                  Actual timestamp scans versus promised SLA cutoffs.
                 </p>
               </div>
             </div>
@@ -396,17 +407,17 @@ export const ShipmentDetail: React.FC<ShipmentDetailProps> = ({
 
         {activeTab === 'diagnosis' && (
           <div className="space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-md bg-violet-50 text-violet-600 flex items-center justify-center font-bold">
-                  <Bot className="w-4 h-4" />
+            <div className="flex items-center justify-between pb-3 border-b border-navy-700/60">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-md bg-navy-850 border border-violet-400/40 text-violet-300 flex items-center justify-center font-bold">
+                  <Sparkles className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900">
-                    Google Gemma 4 31B Instruct Diagnosis
+                  <h3 className="text-sm font-bold text-white font-mono">
+                    Google Gemma 4 31B-it Diagnostic Inference
                   </h3>
-                  <p className="text-xs text-slate-500">
-                    Structured root cause analysis, evidence pills, and allowlisted remediation.
+                  <p className="text-xs text-slateText-secondary">
+                    Structured root cause analysis, evidence provenance, and allowlisted remediation.
                   </p>
                 </div>
               </div>
@@ -425,71 +436,80 @@ export const ShipmentDetail: React.FC<ShipmentDetailProps> = ({
             {latestAnalysis ? (
               <div className="space-y-4">
                 {/* Issue & Root Cause Box */}
-                <div className="p-4 bg-violet-50/50 border border-violet-100 rounded-md space-y-2">
+                <div className="p-4 bg-navy-850 border border-violet-400/40 rounded-md space-y-2 shadow-glow-violet">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-violet-900 uppercase tracking-wider">
+                    <span className="text-xs font-bold font-mono text-violet-300 uppercase tracking-wider">
                       Issue Identified: {latestAnalysis.diagnosis.issue_type}
                     </span>
                     <StatusBadge status={latestAnalysis.diagnosis.risk_level} size="sm" />
                   </div>
-                  <p className="text-xs text-slate-700 font-medium">
+                  <p className="text-xs text-slateText-primary font-medium leading-relaxed">
                     {latestAnalysis.diagnosis.root_cause}
                   </p>
                 </div>
 
-                {/* Grounded Evidence Pills */}
-                <div>
-                  <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-                    Verified Grounded Evidence
-                  </h4>
-                  <div className="flex flex-wrap gap-2">
-                    {latestAnalysis.diagnosis.evidence.map((item, idx) => (
-                      <span
-                        key={idx}
-                        className="px-2.5 py-1 bg-slate-100 border border-slate-200 text-slate-700 rounded text-xs font-medium flex items-center gap-1.5"
-                      >
-                        <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" />
-                        {item}
-                      </span>
-                    ))}
-                  </div>
-                </div>
+                {/* Grounded Evidence Card */}
+                <EvidenceCard
+                  title="Empirical Grounded Evidence"
+                  items={latestAnalysis.diagnosis.evidence.map((ev, i) => ({
+                    label: `Evidence Fact #${i + 1}`,
+                    value: ev,
+                    highlightVariant: i === 0 ? 'coral' : 'cyan',
+                    source: 'Gemma 4 Evaluator',
+                  }))}
+                  provenance="Evolus AI REST Endpoint (`gemma4 31B-it`)"
+                  verifiedAt={new Date().toLocaleTimeString()}
+                />
 
                 {/* Recommended Remediation Action */}
-                <div className="p-4 bg-slate-50 border border-slate-200 rounded-md space-y-2">
-                  <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                    Recommended Corrective Action
+                <div className="p-4 bg-navy-850 border border-navy-700 rounded-md space-y-3">
+                  <h4 className="text-xs font-bold text-slateText-muted uppercase tracking-wider font-mono">
+                    Autonomous Remediation Proposal
                   </h4>
-                  <p className="text-xs text-slate-700 font-medium">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <ShieldCheck className="w-4 h-4 text-cyan-400" />
+                      <span className="text-xs font-mono font-bold text-cyan-400">
+                        {latestAnalysis.diagnosis.tool_name}
+                      </span>
+                    </div>
+                    <span className="text-[11px] font-mono text-slateText-muted">
+                      Confidence: {(latestAnalysis.diagnosis.confidence * 100).toFixed(0)}%
+                    </span>
+                  </div>
+                  <p className="text-xs text-slateText-secondary">
                     {latestAnalysis.diagnosis.recommended_action}
                   </p>
-                  <div className="flex items-center gap-3 pt-2 text-xs">
-                    <span className="font-mono bg-white px-2 py-0.5 border border-slate-200 rounded text-slate-800 font-bold">
-                      Tool: {latestAnalysis.diagnosis.tool_name}
-                    </span>
-                    {latestAnalysis.requires_human_approval && (
-                      <span className="text-xs px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 font-semibold flex items-center gap-1">
-                        <Clock className="w-3 h-3" /> Requires Human Sign-Off (RULE-E06)
-                      </span>
-                    )}
+
+                  <div className="pt-2 flex items-center justify-end gap-2">
+                    <Button
+                      variant="agent"
+                      size="sm"
+                      onClick={() => onOpenChat(shipment)}
+                    >
+                      Authorize via Copilot
+                    </Button>
                   </div>
                 </div>
               </div>
             ) : (
-              <div className="p-8 text-center bg-slate-50 border border-slate-200 rounded-md space-y-3">
-                <Bot className="w-8 h-8 text-violet-500 mx-auto" />
-                <h4 className="text-xs font-bold text-slate-800">No active diagnosis recorded</h4>
-                <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                  Click the button below to invoke Google Gemma 4 31B Instruct via the Evolus AI Platform to evaluate shipment milestones and paperwork.
+              <div className="p-8 text-center bg-navy-850 border border-navy-700 rounded-md">
+                <Sparkles className="w-8 h-8 text-violet-400/80 mx-auto mb-2" />
+                <h4 className="text-xs font-bold text-white font-mono">
+                  No Diagnosis Cached for This Shipment
+                </h4>
+                <p className="text-xs text-slateText-secondary mt-1 max-w-sm mx-auto">
+                  Click the button below to query Google Gemma 4 31B-it via Evolus AI to diagnose root causes and suggest recovery workflows.
                 </p>
                 <Button
                   variant="agent"
                   size="sm"
                   isLoading={isAnalyzing}
-                  leftIcon={<Sparkles className="w-4 h-4" />}
+                  leftIcon={<Sparkles className="w-3.5 h-3.5" />}
                   onClick={handleRunDiagnosis}
+                  className="mt-3"
                 >
-                  Run Agent Diagnosis Now
+                  Run Gemma 4 Diagnostic
                 </Button>
               </div>
             )}

@@ -28,22 +28,22 @@ export const ShipmentFiltersBar: React.FC<ShipmentFiltersBarProps> = ({
   const hasActiveFilters = Boolean(searchTerm || selectedStatus || selectedRisk || selectedMode);
 
   return (
-    <div className="bg-white border border-slate-200 rounded-md p-4 shadow-sm space-y-3">
+    <div className="bg-navy-900 border border-navy-700 rounded-md p-4 space-y-3 shadow-md">
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
         {/* Search input */}
         <div className="relative flex-1">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-cyan-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder="Search by tracking #, origin, or destination..."
+            placeholder="Search by tracking #, origin, destination, container, or carrier..."
             value={searchTerm}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="w-full pl-9 pr-8 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-md text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-sans"
+            className="w-full pl-9 pr-8 py-2 text-xs bg-navy-950 border border-navy-700 rounded text-slateText-primary placeholder-slateText-muted focus:outline-none focus:ring-1 focus:ring-cyan-400/40 focus:border-cyan-400 transition-all font-mono"
           />
           {searchTerm && (
             <button
               onClick={() => onSearchChange('')}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slateText-muted hover:text-slateText-primary"
             >
               <X className="w-3.5 h-3.5" />
             </button>
@@ -52,26 +52,26 @@ export const ShipmentFiltersBar: React.FC<ShipmentFiltersBarProps> = ({
 
         {/* Quick Risk Filters */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
-          <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mr-1 flex items-center gap-1">
-            <Filter className="w-3 h-3" /> Risk:
+          <span className="text-[11px] font-semibold text-slateText-muted uppercase tracking-wider mr-1 flex items-center gap-1 font-mono">
+            <Filter className="w-3 h-3 text-cyan-400" /> Risk:
           </span>
           {(['', 'CRITICAL', 'HIGH', 'MEDIUM', 'LOW'] as const).map((risk) => {
             const isSelected = selectedRisk === risk;
             let label = risk || 'All';
-            let activeColor = 'bg-blue-50 text-blue-700 border-blue-200';
-            if (risk === 'CRITICAL') activeColor = 'bg-red-50 text-red-700 border-red-200';
-            if (risk === 'HIGH') activeColor = 'bg-orange-50 text-orange-700 border-orange-200';
-            if (risk === 'MEDIUM') activeColor = 'bg-amber-50 text-amber-700 border-amber-200';
-            if (risk === 'LOW') activeColor = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+            let activeColor = 'bg-cyan-400 text-navy-950 border-cyan-400 font-bold shadow-glow-cyan';
+            if (risk === 'CRITICAL') activeColor = 'bg-coral-400/25 text-coral-400 border-coral-400 shadow-glow-coral font-bold';
+            if (risk === 'HIGH') activeColor = 'bg-coral-400/20 text-coral-300 border-coral-400/60 font-bold';
+            if (risk === 'MEDIUM') activeColor = 'bg-amber-400/20 text-amber-400 border-amber-400/60 font-bold';
+            if (risk === 'LOW') activeColor = 'bg-mint-400/20 text-mint-400 border-mint-400/60 font-bold';
 
             return (
               <button
                 key={risk}
                 onClick={() => onRiskChange(risk)}
-                className={`text-[11px] font-medium px-2 py-1 rounded border transition-all ${
+                className={`text-[11px] font-mono px-2.5 py-1 rounded border transition-all ${
                   isSelected
-                    ? `${activeColor} font-bold shadow-xs`
-                    : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                    ? activeColor
+                    : 'bg-navy-850 text-slateText-secondary border-navy-700 hover:bg-navy-800 hover:text-slateText-primary'
                 }`}
               >
                 {label}
@@ -82,15 +82,15 @@ export const ShipmentFiltersBar: React.FC<ShipmentFiltersBarProps> = ({
       </div>
 
       {/* Secondary filter selectors (Mode & Status) */}
-      <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-100 text-xs">
+      <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-navy-700/60 text-xs">
         <div className="flex flex-wrap items-center gap-3">
           {/* Transport Mode */}
           <div className="flex items-center gap-2">
-            <label className="text-slate-500 font-medium">Mode:</label>
+            <label className="text-slateText-muted font-medium font-mono text-[11px]">Mode:</label>
             <select
               value={selectedMode}
               onChange={(e) => onModeChange(e.target.value as TransportMode | '')}
-              className="py-1 px-2 bg-slate-50 border border-slate-200 rounded text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs"
+              className="py-1 px-2.5 bg-navy-850 border border-navy-700 rounded text-slateText-primary focus:outline-none focus:border-cyan-400 text-xs font-mono"
             >
               <option value="">All Modes</option>
               <option value="SEA">Sea Freight</option>
@@ -102,11 +102,11 @@ export const ShipmentFiltersBar: React.FC<ShipmentFiltersBarProps> = ({
 
           {/* Shipment Status */}
           <div className="flex items-center gap-2">
-            <label className="text-slate-500 font-medium">Status:</label>
+            <label className="text-slateText-muted font-medium font-mono text-[11px]">Status:</label>
             <select
               value={selectedStatus}
               onChange={(e) => onStatusChange(e.target.value as ShipmentStatus | '')}
-              className="py-1 px-2 bg-slate-50 border border-slate-200 rounded text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs"
+              className="py-1 px-2.5 bg-navy-850 border border-navy-700 rounded text-slateText-primary focus:outline-none focus:border-cyan-400 text-xs font-mono"
             >
               <option value="">All Statuses</option>
               <option value="BOOKED">Booked</option>
@@ -122,7 +122,7 @@ export const ShipmentFiltersBar: React.FC<ShipmentFiltersBarProps> = ({
         {hasActiveFilters && (
           <button
             onClick={onResetFilters}
-            className="text-[11px] text-slate-500 hover:text-red-600 underline transition-colors flex items-center gap-1"
+            className="text-[11px] font-mono text-cyan-400 hover:text-cyan-300 underline transition-colors flex items-center gap-1"
           >
             Clear all filters
           </button>

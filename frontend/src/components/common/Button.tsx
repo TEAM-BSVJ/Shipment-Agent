@@ -2,7 +2,7 @@ import React from 'react';
 import { Loader2 } from 'lucide-react';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'danger' | 'agent' | 'ghost' | 'outline';
+  variant?: 'primary' | 'secondary' | 'danger' | 'agent' | 'mint' | 'ghost' | 'outline';
   size?: 'sm' | 'md' | 'lg';
   isLoading?: boolean;
   leftIcon?: React.ReactNode;
@@ -20,23 +20,32 @@ export const Button: React.FC<ButtonProps> = ({
   className = '',
   ...props
 }) => {
-  let variantStyles = 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm';
+  let variantStyles = 'bg-cyan-400 text-navy-950 font-semibold hover:bg-cyan-300 shadow-sm hover:shadow-glow-cyan active:scale-[0.98]';
 
   switch (variant) {
     case 'secondary':
-      variantStyles = 'bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 shadow-sm';
+      variantStyles =
+        'bg-navy-850 text-slateText-primary border border-navy-700 hover:bg-navy-800 hover:border-cyan-400/40 hover:text-white shadow-sm active:scale-[0.98]';
       break;
     case 'danger':
-      variantStyles = 'bg-red-600 text-white hover:bg-red-700 shadow-sm';
+      variantStyles =
+        'bg-coral-400 text-white font-semibold hover:bg-coral-500 shadow-sm hover:shadow-glow-coral active:scale-[0.98]';
       break;
     case 'agent':
-      variantStyles = 'bg-violet-600 text-white hover:bg-violet-700 shadow-sm';
+      variantStyles =
+        'bg-violet-400 text-navy-950 font-semibold hover:bg-violet-300 shadow-sm hover:shadow-glow-violet active:scale-[0.98]';
+      break;
+    case 'mint':
+      variantStyles =
+        'bg-mint-400 text-navy-950 font-semibold hover:bg-mint-300 shadow-sm hover:shadow-glow-mint active:scale-[0.98]';
       break;
     case 'ghost':
-      variantStyles = 'text-slate-600 hover:bg-slate-100 hover:text-slate-900';
+      variantStyles =
+        'text-slateText-secondary hover:text-slateText-primary hover:bg-navy-800 active:scale-[0.98]';
       break;
     case 'outline':
-      variantStyles = 'border border-slate-300 text-slate-700 hover:bg-slate-50';
+      variantStyles =
+        'border border-navy-700 text-slateText-secondary hover:border-cyan-400/40 hover:text-slateText-primary hover:bg-navy-850 active:scale-[0.98]';
       break;
   }
 
@@ -49,11 +58,11 @@ export const Button: React.FC<ButtonProps> = ({
   return (
     <button
       disabled={disabledState}
-      className={`inline-flex items-center justify-center font-medium rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed ${variantStyles} ${sizeStyles} ${className}`}
+      className={`inline-flex items-center justify-center font-medium rounded-sm transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-cyan-400/40 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:shadow-none disabled:active:scale-100 ${variantStyles} ${sizeStyles} ${className}`}
       {...props}
     >
       {isLoading ? (
-        <Loader2 className="w-4 h-4 animate-spin text-current" />
+        <Loader2 className="w-4 h-4 animate-spin text-current shrink-0" />
       ) : (
         leftIcon && <span className="inline-flex shrink-0">{leftIcon}</span>
       )}

@@ -13,9 +13,10 @@ import {
   RefreshCw,
   Scale,
   Search,
-  ShieldAlert,
+  Flame,
   ShieldCheck,
   Truck,
+  Sparkles,
 } from 'lucide-react';
 import {
   EnrichedException,
@@ -94,171 +95,185 @@ export const ExceptionQueueTable: React.FC<ExceptionQueueTableProps> = ({
     return { total, critical, open, resolved };
   }, [exceptions]);
 
-  // Format timestamp
   const formatTime = (iso?: string) => {
     if (!iso) return 'Recent';
     try {
       const d = new Date(iso);
-      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', month: 'short', day: 'numeric' });
+      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) + ' UTC';
     } catch {
       return iso;
     }
   };
 
-  const getExceptionIcon = (type: ExceptionType) => {
+  const getExceptionIcon = (type: ExceptionType | string) => {
     switch (type) {
       case 'MISSING_DOCUMENT':
-        return <FileText className="w-4 h-4 text-amber-600" />;
+        return <FileText className="w-4 h-4 text-coral-400" />;
       case 'WEIGHT_MISMATCH':
-        return <Scale className="w-4 h-4 text-orange-600" />;
+        return <Scale className="w-4 h-4 text-coral-400" />;
       case 'MILESTONE_OVERDUE':
-        return <Clock className="w-4 h-4 text-red-600" />;
+        return <Clock className="w-4 h-4 text-amber-400" />;
       case 'CUSTOMS_REJECTION':
-        return <ShieldAlert className="w-4 h-4 text-rose-600" />;
-      case 'CARRIER_DELAY':
-        return <Truck className="w-4 h-4 text-blue-600" />;
+        return <Flame className="w-4 h-4 text-coral-400" />;
       default:
-        return <AlertTriangle className="w-4 h-4 text-slate-600" />;
+        return <AlertTriangle className="w-4 h-4 text-coral-400" />;
     }
   };
 
   return (
     <div className="space-y-4">
-      {/* Metrics Row */}
+      {/* Top Telemetry Stats Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="bg-white border border-slate-200 rounded-md p-3.5 shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Tracked</span>
-            <Layers className="w-4 h-4 text-slate-400" />
-          </div>
-          <p className="text-2xl font-bold text-slate-900 mt-1">{stats.total}</p>
-          <span className="text-[11px] text-slate-400">All registered anomalies</span>
+        <div
+          onClick={() => {
+            setSelectedStatus('ALL');
+            setSelectedSeverity('ALL');
+          }}
+          className={`p-3 rounded-md border cursor-pointer transition-all ${
+            selectedStatus === 'ALL' && selectedSeverity === 'ALL'
+              ? 'bg-navy-850 border-cyan-400 shadow-glow-cyan'
+              : 'bg-navy-900 border-navy-700 hover:border-navy-600'
+          }`}
+        >
+          <span className="text-[11px] font-semibold text-slateText-muted uppercase tracking-wider block font-mono">
+            Total Bottlenecks
+          </span>
+          <p className="text-xl font-bold font-mono text-white mt-1">{stats.total}</p>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-md p-3.5 shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-red-600 uppercase tracking-wider">High & Critical</span>
-            <ShieldAlert className="w-4 h-4 text-red-500" />
-          </div>
-          <p className="text-2xl font-bold text-red-600 mt-1">{stats.critical}</p>
-          <span className="text-[11px] text-slate-400">Urgent operational impact</span>
+        <div
+          onClick={() => {
+            setSelectedSeverity('CRITICAL');
+            setSelectedStatus('ACTIVE');
+          }}
+          className={`p-3 rounded-md border cursor-pointer transition-all ${
+            selectedSeverity === 'CRITICAL'
+              ? 'bg-navy-850 border-coral-400 shadow-glow-coral'
+              : 'bg-navy-900 border-navy-700 hover:border-navy-600'
+          }`}
+        >
+          <span className="text-[11px] font-semibold text-coral-400 uppercase tracking-wider block font-mono flex items-center gap-1">
+            <Flame className="w-3.5 h-3.5" /> High / Critical
+          </span>
+          <p className="text-xl font-bold font-mono text-coral-400 mt-1">{stats.critical}</p>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-md p-3.5 shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-amber-600 uppercase tracking-wider">Open / Triage</span>
-            <Clock className="w-4 h-4 text-amber-500" />
-          </div>
-          <p className="text-2xl font-bold text-amber-700 mt-1">{stats.open}</p>
-          <span className="text-[11px] text-slate-400">Awaiting corrective actions</span>
+        <div
+          onClick={() => {
+            setSelectedStatus('ACTIVE');
+            setSelectedSeverity('ALL');
+          }}
+          className={`p-3 rounded-md border cursor-pointer transition-all ${
+            selectedStatus === 'ACTIVE' && selectedSeverity === 'ALL'
+              ? 'bg-navy-850 border-amber-400 shadow-glow-amber'
+              : 'bg-navy-900 border-navy-700 hover:border-navy-600'
+          }`}
+        >
+          <span className="text-[11px] font-semibold text-amber-400 uppercase tracking-wider block font-mono">
+            Active Triage
+          </span>
+          <p className="text-xl font-bold font-mono text-amber-400 mt-1">{stats.open}</p>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-md p-3.5 shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-emerald-600 uppercase tracking-wider">Resolved</span>
-            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-          </div>
-          <p className="text-2xl font-bold text-emerald-700 mt-1">{stats.resolved}</p>
-          <span className="text-[11px] text-slate-400">Closed with audit sign-off</span>
+        <div
+          onClick={() => {
+            setSelectedStatus('RESOLVED');
+            setSelectedSeverity('ALL');
+          }}
+          className={`p-3 rounded-md border cursor-pointer transition-all ${
+            selectedStatus === 'RESOLVED'
+              ? 'bg-navy-850 border-mint-400 shadow-glow-mint'
+              : 'bg-navy-900 border-navy-700 hover:border-navy-600'
+          }`}
+        >
+          <span className="text-[11px] font-semibold text-mint-400 uppercase tracking-wider block font-mono">
+            Resolved Log
+          </span>
+          <p className="text-xl font-bold font-mono text-mint-400 mt-1">{stats.resolved}</p>
         </div>
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="bg-white border border-slate-200 rounded-md p-3 shadow-sm space-y-3">
-        <div className="flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center justify-between">
-          {/* Search Box */}
+      <div className="bg-navy-900 border border-navy-700 rounded-md p-3.5 space-y-3 shadow-md">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          {/* Search box */}
           <div className="relative flex-1">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-cyan-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
+              placeholder="Search exceptions by tracking #, root cause, or description..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search exceptions by tracking number, description, or root cause..."
-              className="w-full pl-9 pr-3 py-1.5 text-xs border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 placeholder:text-slate-400 text-slate-800"
+              className="w-full pl-9 pr-3 py-1.5 text-xs bg-navy-950 border border-navy-700 rounded text-slateText-primary placeholder-slateText-muted focus:outline-none focus:border-cyan-400 font-mono"
             />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs"
-              >
-                Clear
-              </button>
-            )}
           </div>
 
-          {/* Quick Refresh */}
-          {onRefresh && (
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={onRefresh}
-              isLoading={isLoading}
-              leftIcon={<RefreshCw className="w-3.5 h-3.5" />}
-            >
-              Refresh
-            </Button>
-          )}
+          {/* Quick Severity Buttons */}
+          <div className="flex items-center gap-1.5">
+            <span className="text-[11px] font-semibold text-slateText-muted uppercase tracking-wider font-mono mr-1">
+              Tier:
+            </span>
+            {['ALL', 'CRITICAL', 'HIGH', 'MEDIUM'].map((sev) => (
+              <button
+                key={sev}
+                onClick={() => setSelectedSeverity(sev)}
+                className={`text-[11px] font-mono px-2 py-1 rounded border transition-all ${
+                  selectedSeverity === sev
+                    ? 'bg-cyan-400 text-navy-950 border-cyan-400 font-bold shadow-glow-cyan'
+                    : 'bg-navy-850 text-slateText-secondary border-navy-700 hover:bg-navy-800 hover:text-white'
+                }`}
+              >
+                {sev}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* Filter Pills */}
-        <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100 text-xs">
-          <span className="text-slate-400 font-semibold uppercase text-[10px] tracking-wider flex items-center gap-1">
-            <Filter className="w-3 h-3" /> Filters:
-          </span>
+        {/* Status and Type Selectors */}
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-navy-700/60 text-xs">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2">
+              <label className="text-slateText-muted font-mono text-[11px]">Status:</label>
+              <select
+                value={selectedStatus}
+                onChange={(e) => setSelectedStatus(e.target.value)}
+                className="py-1 px-2.5 bg-navy-850 border border-navy-700 rounded text-slateText-primary focus:outline-none focus:border-cyan-400 text-xs font-mono"
+              >
+                <option value="ALL">All Statuses</option>
+                <option value="ACTIVE">Active (Open & Investigating)</option>
+                <option value="OPEN">Open</option>
+                <option value="INVESTIGATING">Investigating</option>
+                <option value="PENDING_APPROVAL">Pending Human Approval</option>
+                <option value="RESOLVED">Resolved</option>
+                <option value="DISMISSED">Dismissed</option>
+              </select>
+            </div>
 
-          {/* Status Select */}
-          <select
-            value={selectedStatus}
-            onChange={(e) => setSelectedStatus(e.target.value)}
-            className="text-xs py-1 px-2.5 bg-slate-50 border border-slate-200 rounded text-slate-700 font-medium focus:outline-none focus:border-blue-500"
-          >
-            <option value="ALL">All Statuses</option>
-            <option value="ACTIVE">Active Only (Open / Triage)</option>
-            <option value="OPEN">OPEN</option>
-            <option value="INVESTIGATING">INVESTIGATING</option>
-            <option value="IN_PROGRESS">IN_PROGRESS</option>
-            <option value="PENDING_APPROVAL">PENDING_APPROVAL</option>
-            <option value="RESOLVED">RESOLVED</option>
-            <option value="DISMISSED">DISMISSED</option>
-          </select>
+            <div className="flex items-center gap-2">
+              <label className="text-slateText-muted font-mono text-[11px]">Type:</label>
+              <select
+                value={selectedType}
+                onChange={(e) => setSelectedType(e.target.value)}
+                className="py-1 px-2.5 bg-navy-850 border border-navy-700 rounded text-slateText-primary focus:outline-none focus:border-cyan-400 text-xs font-mono"
+              >
+                <option value="ALL">All Bottleneck Types</option>
+                <option value="MISSING_DOCUMENT">Missing Document</option>
+                <option value="WEIGHT_MISMATCH">Weight Mismatch</option>
+                <option value="MILESTONE_OVERDUE">Milestone Overdue</option>
+                <option value="CUSTOMS_REJECTION">Customs Hold</option>
+              </select>
+            </div>
+          </div>
 
-          {/* Severity Select */}
-          <select
-            value={selectedSeverity}
-            onChange={(e) => setSelectedSeverity(e.target.value)}
-            className="text-xs py-1 px-2.5 bg-slate-50 border border-slate-200 rounded text-slate-700 font-medium focus:outline-none focus:border-blue-500"
-          >
-            <option value="ALL">All Severities</option>
-            <option value="CRITICAL">Critical Risk</option>
-            <option value="HIGH">High Risk</option>
-            <option value="MEDIUM">Medium Risk</option>
-            <option value="LOW">Low Risk</option>
-          </select>
-
-          {/* Type Select */}
-          <select
-            value={selectedType}
-            onChange={(e) => setSelectedType(e.target.value)}
-            className="text-xs py-1 px-2.5 bg-slate-50 border border-slate-200 rounded text-slate-700 font-medium focus:outline-none focus:border-blue-500"
-          >
-            <option value="ALL">All Exception Types</option>
-            <option value="MISSING_DOCUMENT">Missing Document</option>
-            <option value="WEIGHT_MISMATCH">Weight Mismatch</option>
-            <option value="MILESTONE_OVERDUE">Milestone Overdue</option>
-            <option value="CUSTOMS_REJECTION">Customs Rejection</option>
-            <option value="CONSIGNEE_MISMATCH">Consignee Mismatch</option>
-            <option value="CARRIER_DELAY">Carrier Delay</option>
-          </select>
-
-          {(selectedStatus !== 'ALL' || selectedSeverity !== 'ALL' || selectedType !== 'ALL' || searchQuery) && (
+          {(searchQuery || selectedStatus !== 'ALL' || selectedSeverity !== 'ALL' || selectedType !== 'ALL') && (
             <button
               onClick={() => {
+                setSearchQuery('');
                 setSelectedStatus('ALL');
                 setSelectedSeverity('ALL');
                 setSelectedType('ALL');
-                setSearchQuery('');
               }}
-              className="text-blue-600 hover:text-blue-800 text-[11px] font-medium underline ml-auto"
+              className="text-[11px] font-mono text-cyan-400 hover:text-cyan-300 underline"
             >
               Reset Filters
             </button>
@@ -266,163 +281,131 @@ export const ExceptionQueueTable: React.FC<ExceptionQueueTableProps> = ({
         </div>
       </div>
 
-      {/* Exception Cards List */}
+      {/* Exception Items List */}
       <div className="space-y-3">
         {filteredExceptions.length === 0 ? (
-          <div className="p-12 text-center bg-white border border-slate-200 rounded-md">
-            <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto" />
-            <h4 className="text-sm font-bold text-slate-800 mt-2">No matching exceptions found</h4>
-            <p className="text-xs text-slate-500 mt-1">
-              Try adjusting your search query or reset the filters above.
+          <div className="p-12 text-center bg-navy-900 border border-navy-700 rounded-md">
+            <CheckCircle2 className="w-10 h-10 text-mint-400 mx-auto mb-2 opacity-80" />
+            <h4 className="text-sm font-bold text-white font-mono">No Active Exceptions Match Filters</h4>
+            <p className="text-xs text-slateText-secondary max-w-sm mx-auto mt-1">
+              All monitored shipments are operating within operational thresholds for the chosen filters.
             </p>
           </div>
         ) : (
           filteredExceptions.map((exc) => {
-            const isResolved = exc.status === 'RESOLVED';
             const isCritical = exc.risk_level === 'CRITICAL' || exc.risk_level === 'HIGH';
 
             return (
               <div
                 key={exc.id}
-                className={`bg-white border rounded-md p-4 shadow-sm transition-all hover:shadow-md ${
-                  isCritical && !isResolved
-                    ? 'border-red-200 bg-red-50/10'
-                    : isResolved
-                    ? 'border-slate-200 opacity-90'
-                    : 'border-slate-200'
+                className={`bg-navy-850 border rounded-md p-4 transition-all shadow-sm ${
+                  isCritical
+                    ? 'border-coral-400/50 hover:border-coral-400 hover:shadow-glow-coral'
+                    : 'border-navy-700 hover:border-navy-600'
                 }`}
               >
-                {/* Header Row */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100">
-                  <div className="flex items-center gap-2.5 flex-wrap">
-                    <div className="w-8 h-8 rounded bg-slate-50 border border-slate-200 flex items-center justify-center shrink-0">
+                {/* Header row */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-navy-700/60">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="p-1.5 rounded bg-navy-900 border border-navy-700">
                       {getExceptionIcon(exc.exception_type)}
-                    </div>
-
-                    <div>
-                      <div className="flex items-center gap-2">
-                        {exc.tracking_number && (
-                          <button
-                            onClick={() => onSelectShipment?.(exc.tracking_number!)}
-                            className="font-mono font-bold text-xs text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1 bg-blue-50 px-2 py-0.5 rounded border border-blue-100"
-                            title="View shipment details"
-                          >
-                            <span>{exc.tracking_number}</span>
-                            <ExternalLink className="w-3 h-3" />
-                          </button>
-                        )}
-                        <h4 className="text-xs font-bold text-slate-900 tracking-tight">
-                          {exc.exception_type.replace(/_/g, ' ')}
-                        </h4>
-                      </div>
-
-                      {exc.origin && exc.destination && (
-                        <p className="text-[11px] text-slate-500 flex items-center gap-1 mt-0.5">
-                          <MapPin className="w-3 h-3 text-slate-400" />
-                          {exc.origin} → {exc.destination} ({exc.mode || 'FREIGHT'})
-                          {exc.carrier_id && <span className="text-slate-400">| Carrier: {exc.carrier_id}</span>}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-1.5 self-start sm:self-center">
-                    <StatusBadge status={exc.risk_level} size="sm" />
-                    <StatusBadge status={exc.status} size="sm" />
-                    <span className="text-[11px] text-slate-400 ml-1 font-mono">
-                      {formatTime(exc.detected_at)}
+                    </span>
+                    <button
+                      onClick={() => onSelectShipment && onSelectShipment(exc.tracking_number || '')}
+                      className="font-mono font-bold text-xs text-cyan-400 hover:underline flex items-center gap-1"
+                    >
+                      {exc.tracking_number}
+                      <ExternalLink className="w-3 h-3 text-slateText-muted" />
+                    </button>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-navy-900 text-slateText-secondary border border-navy-700">
+                      {exc.mode} Freight
+                    </span>
+                    <span className="text-xs font-bold text-white font-mono">
+                      {exc.exception_type.replace(/_/g, ' ')}
                     </span>
                   </div>
+
+                  <div className="flex items-center gap-2">
+                    <StatusBadge status={exc.risk_level} size="sm" />
+                    <StatusBadge status={exc.status} size="sm" />
+                  </div>
                 </div>
 
-                {/* Body Content */}
-                <div className="py-3 space-y-2.5 text-xs">
-                  {/* Description */}
-                  <p className="text-slate-800 font-medium leading-relaxed">{exc.description}</p>
+                {/* Description & Route */}
+                <div className="mt-3 space-y-2">
+                  <div className="flex items-center gap-2 text-xs text-slateText-muted font-mono">
+                    <MapPin className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                    <span>
+                      {exc.origin} → {exc.destination} ({exc.carrier_id})
+                    </span>
+                    <span className="text-navy-700">•</span>
+                    <span>Detected {formatTime(exc.detected_at)}</span>
+                  </div>
 
-                  {/* Root cause analysis */}
-                  {exc.root_cause && (
-                    <div className="p-2.5 bg-slate-50 border border-slate-200 rounded text-xs text-slate-700">
-                      <span className="font-semibold text-slate-900 mr-1.5">Root Cause Diagnosis:</span>
-                      <span>{exc.root_cause}</span>
-                    </div>
-                  )}
-
-                  {/* Grounded Evidence Pills */}
-                  {exc.evidence && exc.evidence.length > 0 && (
-                    <div>
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
-                        Grounded Telemetry & Document Evidence:
-                      </span>
-                      <div className="flex flex-wrap gap-1.5">
-                        {exc.evidence.map((ev, i) => (
-                          <span
-                            key={i}
-                            className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 border border-slate-200 text-slate-700 rounded text-[11px]"
-                          >
-                            <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" />
-                            {ev}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Pending Action Tag (if any) */}
-                  {exc.pending_action && (
-                    <div className="flex items-center gap-2 pt-1">
-                      <span className="text-[11px] font-medium text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded flex items-center gap-1">
-                        <Clock className="w-3 h-3 text-amber-600" />
-                        Queued Action: {exc.pending_action.action_type.replace(/_/g, ' ')} (Tool: {exc.pending_action.tool_used})
-                      </span>
-                    </div>
-                  )}
+                  <p className="text-xs text-slateText-primary leading-relaxed font-sans">
+                    {exc.description}
+                  </p>
                 </div>
 
-                {/* Action Footer */}
-                <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
-                  <div className="text-[11px] text-slate-400 font-mono">
-                    ID: {exc.id.slice(0, 13)}...
-                    {exc.resolved_by && (
-                      <span className="ml-2 text-emerald-700 font-sans">
-                        • Resolved by {exc.resolved_by}
+                {/* Empirical Evidence Badges */}
+                {exc.evidence && exc.evidence.length > 0 && (
+                  <div className="mt-3 pt-2.5 border-t border-navy-700/60">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slateText-muted font-mono block mb-1.5">
+                      Verified Empirical Evidence:
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {exc.evidence.map((ev, idx) => (
+                        <span
+                          key={idx}
+                          className="px-2.5 py-1 rounded bg-navy-900 border border-navy-700 text-[11px] font-mono text-cyan-300"
+                        >
+                          • {ev}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* AI Root Cause & Recommendation */}
+                {exc.root_cause && (
+                  <div className="mt-3 p-3 rounded bg-navy-900 border border-violet-400/30 text-xs space-y-1">
+                    <div className="flex items-center gap-1.5 text-violet-300 font-bold font-mono">
+                      <Sparkles className="w-3.5 h-3.5 text-violet-400" />
+                      <span>Evolus AI Root-Cause Diagnosis (Gemma 4 31B-it):</span>
+                    </div>
+                    <p className="text-slateText-secondary leading-relaxed font-sans">
+                      {exc.root_cause}
+                    </p>
+                  </div>
+                )}
+
+                {/* Actions Footer */}
+                <div className="mt-3.5 pt-2.5 border-t border-navy-700/60 flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 text-xs font-mono">
+                    {exc.pending_action && (
+                      <span className="text-amber-400 text-[11px] flex items-center gap-1 font-semibold">
+                        <Clock className="w-3.5 h-3.5" />
+                        Pending Action: {exc.pending_action.action_type} ({exc.pending_action.status})
                       </span>
                     )}
                   </div>
 
                   <div className="flex items-center gap-2">
-                    {/* Copilot Diagnosis */}
-                    {exc.tracking_number && onAnalyzeShipment && (
-                      <Button
-                        variant="agent"
-                        size="sm"
-                        onClick={() => onAnalyzeShipment(exc.tracking_number!)}
-                        leftIcon={<Bot className="w-3.5 h-3.5" />}
-                      >
-                        Copilot Reason
-                      </Button>
-                    )}
-
-                    {/* View Shipment */}
-                    {exc.tracking_number && onSelectShipment && (
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => onSelectShipment(exc.tracking_number!)}
-                        leftIcon={<Eye className="w-3.5 h-3.5" />}
-                      >
-                        Shipment
-                      </Button>
-                    )}
-
-                    {/* Resolve / Update */}
                     <Button
-                      variant={isResolved ? 'secondary' : 'primary'}
+                      variant="secondary"
                       size="sm"
                       onClick={() => setActiveModalException(exc)}
-                      leftIcon={isResolved ? <RefreshCw className="w-3.5 h-3.5" /> : <ShieldCheck className="w-3.5 h-3.5" />}
+                      leftIcon={<Eye className="w-3.5 h-3.5" />}
                     >
-                      {isResolved ? 'Re-open / Edit' : 'Triage & Resolve'}
+                      Update Status
+                    </Button>
+                    <Button
+                      variant="agent"
+                      size="sm"
+                      onClick={() => onAnalyzeShipment && onAnalyzeShipment(exc.tracking_number || '')}
+                      leftIcon={<Sparkles className="w-3.5 h-3.5" />}
+                    >
+                      Triage with Copilot
                     </Button>
                   </div>
                 </div>
@@ -432,16 +415,18 @@ export const ExceptionQueueTable: React.FC<ExceptionQueueTableProps> = ({
         )}
       </div>
 
-      {/* Modal for resolving exception */}
-      <ResolveExceptionModal
-        isOpen={Boolean(activeModalException)}
-        onClose={() => setActiveModalException(null)}
-        exception={activeModalException}
-        onSuccess={(updated) => {
-          onUpdateException(updated);
-          setActiveModalException(null);
-        }}
-      />
+      {/* Resolution Modal */}
+      {activeModalException && (
+        <ResolveExceptionModal
+          isOpen={Boolean(activeModalException)}
+          onClose={() => setActiveModalException(null)}
+          exception={activeModalException}
+          onSuccess={(updated) => {
+            onUpdateException(updated);
+            if (onRefresh) onRefresh();
+          }}
+        />
+      )}
     </div>
   );
 };

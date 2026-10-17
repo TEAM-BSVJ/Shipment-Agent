@@ -23,7 +23,6 @@ export const ResolveExceptionModal: React.FC<ResolveExceptionModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // Sync initial state when modal opens
   React.useEffect(() => {
     if (exception) {
       setSelectedStatus(
@@ -49,7 +48,6 @@ export const ResolveExceptionModal: React.FC<ResolveExceptionModalProps> = ({
       setIsSubmitting(true);
       setErrorMsg(null);
 
-      // Attempt backend API call
       try {
         await exceptionService.updateException(exception.id, {
           status: selectedStatus,
@@ -87,9 +85,9 @@ export const ResolveExceptionModal: React.FC<ResolveExceptionModalProps> = ({
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Exception Context Card */}
-        <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-md space-y-2">
+        <div className="p-3.5 bg-navy-900 border border-navy-700 rounded-md space-y-2">
           <div className="flex items-center justify-between">
-            <span className="font-mono text-xs font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded">
+            <span className="font-mono text-xs font-bold text-cyan-400 bg-navy-950 border border-cyan-400/30 px-2 py-0.5 rounded">
               {exception.tracking_number || 'SHIPMENT'}
             </span>
             <div className="flex items-center gap-1.5">
@@ -97,92 +95,73 @@ export const ResolveExceptionModal: React.FC<ResolveExceptionModalProps> = ({
               <StatusBadge status={exception.status} size="sm" />
             </div>
           </div>
-          <p className="text-xs font-medium text-slate-800">{exception.description}</p>
-          <div className="text-[11px] text-slate-500 font-mono">
-            Type: {exception.exception_type} | ID: {exception.id.slice(0, 8)}...
-          </div>
+          <p className="text-xs font-medium text-slateText-primary">{exception.description}</p>
         </div>
 
         {errorMsg && (
-          <div className="p-2.5 bg-red-50 border border-red-200 rounded text-xs text-red-700 flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
+          <div className="p-3 bg-coral-400/20 border border-coral-400/50 rounded-md text-xs text-coral-400 flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-coral-400 shrink-0" />
             <span>{errorMsg}</span>
           </div>
         )}
 
-        {/* Status Selection */}
+        {/* Transition Status */}
         <div>
-          <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-            Target Lifecycle Status
+          <label className="block text-xs font-semibold text-slateText-muted mb-1 font-mono uppercase">
+            Target Resolution Status
           </label>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            {(['RESOLVED', 'DISMISSED', 'INVESTIGATING', 'IN_PROGRESS'] as ExceptionStatus[]).map(
-              (st) => {
-                const isSelected = selectedStatus === st;
-                return (
-                  <button
-                    key={st}
-                    type="button"
-                    onClick={() => setSelectedStatus(st)}
-                    className={`px-2.5 py-2 rounded-md text-xs font-medium border text-center transition-all ${
-                      isSelected
-                        ? st === 'RESOLVED'
-                          ? 'bg-emerald-50 border-emerald-500 text-emerald-800 ring-1 ring-emerald-500'
-                          : st === 'DISMISSED'
-                          ? 'bg-slate-100 border-slate-400 text-slate-800 ring-1 ring-slate-400'
-                          : 'bg-amber-50 border-amber-500 text-amber-800 ring-1 ring-amber-500'
-                        : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
-                    }`}
-                  >
-                    {st.replace(/_/g, ' ')}
-                  </button>
-                );
-              }
-            )}
-          </div>
+          <select
+            value={selectedStatus}
+            onChange={(e) => setSelectedStatus(e.target.value as ExceptionStatus)}
+            className="w-full text-xs bg-navy-950 border border-navy-700 rounded-md p-2 text-slateText-primary focus:outline-none focus:border-cyan-400 font-mono"
+          >
+            <option value="INVESTIGATING">INVESTIGATING (Actively Researching)</option>
+            <option value="IN_PROGRESS">IN_PROGRESS (Remediation Dispatched)</option>
+            <option value="PENDING_APPROVAL">PENDING_APPROVAL (Human Sign-off Gated)</option>
+            <option value="RESOLVED">RESOLVED (Bottleneck Cleared)</option>
+            <option value="DISMISSED">DISMISSED (False Positive / Waived)</option>
+          </select>
         </div>
 
-        {/* Resolution Root Cause & Operator Notes */}
+        {/* Root Cause & Notes */}
         <div>
-          <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-            Operational Root Cause & Resolution Notes *
+          <label className="block text-xs font-semibold text-slateText-muted mb-1 font-mono uppercase">
+            Root Cause Diagnosis / Resolution Log
           </label>
           <textarea
             rows={3}
             value={resolutionNotes}
             onChange={(e) => setResolutionNotes(e.target.value)}
-            placeholder="Describe corrective actions taken (e.g. shipper uploaded revised invoice, weight discrepancy reconciled, carrier rescheduled)..."
-            className="w-full text-xs p-2.5 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-800"
+            placeholder="Document the empirical cause of delay or action taken (e.g. shipper uploaded revised packing list; milestone rescheduled)..."
+            className="w-full text-xs bg-navy-950 border border-navy-700 rounded-md p-2.5 text-slateText-primary focus:outline-none focus:border-cyan-400 font-sans"
           />
         </div>
 
-        {/* Operator Identity */}
+        {/* Responsible Operator */}
         <div>
-          <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-            Sign-off Operator / Reviewer ID
+          <label className="block text-xs font-semibold text-slateText-muted mb-1 font-mono uppercase">
+            Authorized Operations Sign-off
           </label>
           <input
             type="text"
             value={resolvedBy}
             onChange={(e) => setResolvedBy(e.target.value)}
-            placeholder="operator@company.com"
-            className="w-full text-xs p-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-800 font-mono"
+            className="w-full text-xs bg-navy-950 border border-navy-700 rounded-md p-2 text-slateText-primary focus:outline-none focus:border-cyan-400 font-mono"
           />
         </div>
 
-        {/* Modal Footer */}
-        <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
-          <Button type="button" variant="secondary" size="sm" onClick={onClose} disabled={isSubmitting}>
+        <div className="flex items-center justify-end gap-2 pt-3 border-t border-navy-700/60">
+          <Button variant="secondary" size="sm" type="button" onClick={onClose} disabled={isSubmitting}>
             Cancel
           </Button>
           <Button
-            type="submit"
-            variant={selectedStatus === 'RESOLVED' ? 'primary' : 'secondary'}
+            variant="primary"
             size="sm"
+            type="submit"
             isLoading={isSubmitting}
-            leftIcon={selectedStatus === 'RESOLVED' ? <CheckCircle2 className="w-3.5 h-3.5" /> : undefined}
+            leftIcon={<CheckCircle2 className="w-4 h-4" />}
           >
-            Confirm Status Update
+            Save Lifecycle State
           </Button>
         </div>
       </form>

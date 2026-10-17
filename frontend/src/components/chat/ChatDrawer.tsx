@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   ArrowRight,
-  Bot,
   CheckCircle2,
   Clock,
   RefreshCw,
@@ -9,8 +8,9 @@ import {
   ShieldCheck,
   Sparkles,
   Trash2,
-  User,
   X,
+  Radio,
+  Lock,
 } from 'lucide-react';
 import { StatusBadge } from '../common';
 import { ChatMessage, Shipment } from '../../types';
@@ -21,7 +21,7 @@ interface ChatDrawerProps {
   onClose: () => void;
   selectedShipment: Shipment | null;
   onClearShipmentContext?: () => void;
-  onNavigateTab?: (tab: 'dashboard' | 'exceptions' | 'approvals' | 'audit') => void;
+  onNavigateTab?: (tab: any) => void;
 }
 
 export const ChatDrawer: React.FC<ChatDrawerProps> = ({
@@ -43,8 +43,8 @@ export const ChatDrawer: React.FC<ChatDrawerProps> = ({
         {
           role: 'assistant',
           content: selectedShipment
-            ? `Hello! I am your Logistics Operational Copilot powered by Google Gemma 4 31B Instruct via the Evolus AI Platform. Active context: ${selectedShipment.tracking_number} (${selectedShipment.origin} → ${selectedShipment.destination}). How can I assist you with this shipment?`
-            : 'Hello! I am your Logistics Operational Copilot powered by Google Gemma 4 31B Instruct via the Evolus AI Platform. I can assist you with root-cause bottleneck diagnosis, cross-document discrepancies, and allowlisted remediation workflows. What freight scenario would you like to investigate?',
+            ? `Hello! I am your Autonomous Logistics Copilot powered by Google Gemma 4 (31B-it) via Evolus AI. Active telemetry context: ${selectedShipment.tracking_number} (${selectedShipment.origin} → ${selectedShipment.destination}). How can I assist you with this shipment?`
+            : 'Hello! I am your Autonomous Logistics Copilot powered by Google Gemma 4 (31B-it) via Evolus AI. I assist dispatch coordinators with root-cause bottleneck diagnosis, cross-document reconciliation, and allowlisted recovery workflows. What freight scenario would you like to investigate?',
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         },
       ]);
@@ -119,7 +119,7 @@ export const ChatDrawer: React.FC<ChatDrawerProps> = ({
         grounded_facts: [
           'Commercial Invoice missing from repository',
           'Vessel departure gate cutoff: 24 hours remaining',
-          'Carrier: MAERSK_LINE (Sea Freight)',
+          'Carrier: MAERSK_01 (Sea Freight)',
           'High Risk Score: 75/100',
         ],
         recommended_action: 'send_notification: Dispatch MISSING_DOCUMENT_ADVISORY template to export-desk@tatasteel.mock',
@@ -129,12 +129,12 @@ export const ChatDrawer: React.FC<ChatDrawerProps> = ({
     if (q.includes('shp-102') || (shipment?.tracking_number === 'SHP-102' && (q.includes('delay') || q.includes('warehouse') || q.includes('reschedule')))) {
       return {
         content:
-          "Shipment SHP-102 (Dallas DC to Austin Hub) suffered a **+4.5 hour delay** at milestone `WAREHOUSE_DISPATCH`. Ground telemetry verifies that staging area 4B experienced a forklift mechanical breakdown, delaying pallet staging. Carrier vehicle is staged and waiting.",
+          "Shipment SHP-102 (Dallas DC to Austin Hub) suffered a **+4.5 hour delay** at milestone `WAREHOUSE_DISPATCH`. Ground telemetry verifies that staging area 4B experienced a forklift mechanical breakdown, delaying pallet staging. Carrier vehicle FedEx Freight is staged and waiting.",
         grounded_facts: [
           'Milestone WAREHOUSE_DISPATCH is +4.5 hours overdue',
           'Forklift breakdown at Dallas DC dock 4B confirmed by WMS telemetry',
           'Carrier vehicle FedEx Freight staged at dock',
-          'Critical Risk Score: 72/100 (due tomorrow)',
+          'Critical Risk Score: 95/100 (due tomorrow)',
         ],
         recommended_action: 'reschedule_milestone: Push WAREHOUSE_DISPATCH by +5.0 hours (Requires Human Sign-off per RULE-E06)',
       };
@@ -147,8 +147,8 @@ export const ChatDrawer: React.FC<ChatDrawerProps> = ({
         grounded_facts: [
           'Commercial Invoice declared: 250.0 kg',
           'Packing List scale weight: 310.0 kg',
-          'Absolute discrepancy: 60.0 kg (Legal tolerance: 0.5 kg)',
-          'High Risk Score: 70/100',
+          'Absolute discrepancy: 60.0 kg (Tolerance: 0.5 kg)',
+          'High Risk Score: 65/100',
         ],
         recommended_action: 'trigger_workflow: Execute WEIGHT_RECONCILIATION automated manifest update (Waiting for Human Approval)',
       };
@@ -170,9 +170,9 @@ export const ChatDrawer: React.FC<ChatDrawerProps> = ({
     if (q.includes('tool') || q.includes('allowlist') || q.includes('rule-e06') || q.includes('governance')) {
       return {
         content:
-          'The autonomous agent is restricted to **6 allowlisted tools** per Architecture.md Section 5.1:\n\n1. `get_shipment` (read-only query)\n2. `create_correction_task` (autonomous task creation)\n3. `trigger_workflow` (*gated by human approval*)\n4. `send_notification` (parameterized templates only)\n5. `reschedule_milestone` (*gated by human approval*)\n6. `escalate_to_human` (direct broker sign-off)\n\nConsequential tools (3 and 5) strictly require human operator authorization before execution per RULE-E06.',
+          'The autonomous agent is restricted to **6 allowlisted tools** per Architecture.md Section 4.2:\n\n1. `get_shipment` (read-only query)\n2. `create_correction_task` (autonomous task creation)\n3. `trigger_workflow` (*gated by human approval*)\n4. `send_notification` (parameterized templates only)\n5. `reschedule_milestone` (*gated by human approval*)\n6. `escalate_to_human` (direct broker sign-off)\n\nConsequential tools strictly require human operator authorization before execution.',
         grounded_facts: [
-          'Recursion cutoff: max 5 tool iterations per cycle',
+          'Recursion boundary: max 5 tool iterations per cycle',
           'Strict prompt sanitization with <user_data> fences',
           'PostgreSQL append-only audit trail recorded for every invocation',
         ],
@@ -206,7 +206,6 @@ export const ChatDrawer: React.FC<ChatDrawerProps> = ({
     setIsSending(true);
 
     try {
-      // Build conversation history for API
       const history = messages.slice(-6).map((m) => ({
         role: m.role,
         content: m.content,
@@ -269,27 +268,27 @@ export const ChatDrawer: React.FC<ChatDrawerProps> = ({
     <div className="fixed inset-0 z-50 overflow-hidden">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity"
+        className="fixed inset-0 bg-navy-950/80 backdrop-blur-sm transition-opacity"
         onClick={onClose}
         aria-hidden="true"
       />
 
       {/* Drawer Window */}
-      <div className="fixed inset-y-0 right-0 w-full sm:w-[480px] bg-white border-l border-slate-200 shadow-2xl z-50 flex flex-col h-full animate-in slide-in-from-right duration-200">
+      <div className="fixed inset-y-0 right-0 w-full sm:w-[480px] bg-navy-900 border-l border-navy-700 shadow-2xl z-50 flex flex-col h-full animate-in slide-in-from-right duration-200">
         {/* Header */}
-        <div className="p-4 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
+        <div className="p-4 border-b border-navy-700 bg-navy-850 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-violet-600 to-indigo-600 text-white flex items-center justify-center shadow-sm">
-              <Bot className="w-4 h-4" />
+            <div className="w-8 h-8 rounded-lg bg-violet-400 text-navy-950 flex items-center justify-center font-bold shadow-glow-violet">
+              <Sparkles className="w-4 h-4" />
             </div>
             <div>
               <div className="flex items-center gap-1.5">
-                <h3 className="text-sm font-bold text-slate-900">Gemma 4 Copilot</h3>
-                <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-violet-100 text-violet-800 font-bold border border-violet-200">
-                  31B Instruct
+                <h3 className="text-sm font-bold text-white font-mono">AETHERIS Copilot</h3>
+                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-violet-400/20 text-violet-300 font-bold border border-violet-400/40">
+                  Gemma 4 31B-it
                 </span>
               </div>
-              <p className="text-[11px] text-slate-500">
+              <p className="text-[11px] text-slateText-muted">
                 Evolus AI · Autonomous Reasoning & Triage
               </p>
             </div>
@@ -298,14 +297,14 @@ export const ChatDrawer: React.FC<ChatDrawerProps> = ({
           <div className="flex items-center gap-1">
             <button
               onClick={() => setMessages([])}
-              className="text-slate-400 hover:text-slate-600 p-1.5 rounded-md hover:bg-slate-200/60 transition-colors"
+              className="text-slateText-muted hover:text-white p-1.5 rounded hover:bg-navy-800 transition-colors"
               title="Clear conversation history"
             >
               <Trash2 className="w-4 h-4" />
             </button>
             <button
               onClick={onClose}
-              className="text-slate-400 hover:text-slate-600 p-1.5 rounded-md hover:bg-slate-200/60 transition-colors"
+              className="text-slateText-muted hover:text-white p-1.5 rounded hover:bg-navy-800 transition-colors"
               aria-label="Close drawer"
             >
               <X className="w-4 h-4" />
@@ -315,12 +314,12 @@ export const ChatDrawer: React.FC<ChatDrawerProps> = ({
 
         {/* Active Context Bar */}
         {selectedShipment && (
-          <div className="px-4 py-2.5 bg-blue-50/80 border-b border-blue-100 flex items-center justify-between text-xs">
+          <div className="px-4 py-2 bg-navy-950 border-b border-navy-700 flex items-center justify-between text-xs">
             <div className="flex items-center gap-2 overflow-hidden">
-              <span className="font-mono font-bold text-blue-800 shrink-0">
+              <span className="font-mono font-bold text-cyan-400 shrink-0">
                 {selectedShipment.tracking_number}
               </span>
-              <span className="text-slate-500 truncate">
+              <span className="text-slateText-secondary truncate font-mono text-[11px]">
                 {selectedShipment.origin} → {selectedShipment.destination}
               </span>
               <StatusBadge status={selectedShipment.risk_level} size="sm" />
@@ -328,16 +327,16 @@ export const ChatDrawer: React.FC<ChatDrawerProps> = ({
             {onClearShipmentContext && (
               <button
                 onClick={onClearShipmentContext}
-                className="text-[11px] text-blue-600 hover:text-blue-800 font-semibold shrink-0 ml-2"
+                className="text-[11px] font-mono text-cyan-400 hover:text-cyan-300 underline shrink-0 ml-2"
               >
-                Clear Context
+                Clear
               </button>
             )}
           </div>
         )}
 
         {/* Messages Stream */}
-        <div className="flex-1 p-4 overflow-y-auto space-y-4 bg-slate-50/30">
+        <div className="flex-1 p-4 overflow-y-auto space-y-4 bg-navy-950/60">
           {messages.map((msg, idx) => {
             const isUser = msg.role === 'user';
             return (
@@ -346,7 +345,7 @@ export const ChatDrawer: React.FC<ChatDrawerProps> = ({
                 className={`flex gap-2.5 ${isUser ? 'justify-end' : 'justify-start'}`}
               >
                 {!isUser && (
-                  <div className="w-7 h-7 rounded-md bg-violet-100 text-violet-700 flex items-center justify-center shrink-0 mt-0.5 border border-violet-200">
+                  <div className="w-7 h-7 rounded bg-navy-850 border border-violet-400/40 text-violet-300 flex items-center justify-center shrink-0 mt-0.5 shadow-sm">
                     <Sparkles className="w-3.5 h-3.5" />
                   </div>
                 )}
@@ -354,26 +353,26 @@ export const ChatDrawer: React.FC<ChatDrawerProps> = ({
                 <div
                   className={`max-w-[85%] rounded-lg p-3 text-xs leading-relaxed space-y-2 shadow-sm ${
                     isUser
-                      ? 'bg-blue-600 text-white rounded-tr-none'
-                      : 'bg-white text-slate-800 border border-slate-200 rounded-tl-none'
+                      ? 'bg-cyan-400 text-navy-950 font-medium rounded-tr-none'
+                      : 'bg-navy-850 text-slateText-primary border border-navy-700 rounded-tl-none'
                   }`}
                 >
                   {/* Content body */}
                   <div className="whitespace-pre-line font-normal">{msg.content}</div>
 
-                  {/* Grounded Evidence Pills (for assistant responses) */}
+                  {/* Grounded Evidence Pills */}
                   {!isUser && msg.grounded_facts && msg.grounded_facts.length > 0 && (
-                    <div className="pt-2 border-t border-slate-100 space-y-1">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                    <div className="pt-2 border-t border-navy-700/60 space-y-1">
+                      <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slateText-muted block">
                         Verified Telemetry Facts:
                       </span>
                       <div className="flex flex-wrap gap-1">
                         {msg.grounded_facts.map((fact, fIdx) => (
                           <span
                             key={fIdx}
-                            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] bg-emerald-50 text-emerald-800 border border-emerald-200 font-medium"
+                            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono bg-mint-400/15 text-mint-400 border border-mint-400/30"
                           >
-                            <CheckCircle2 className="w-2.5 h-2.5 text-emerald-600 shrink-0" />
+                            <CheckCircle2 className="w-2.5 h-2.5 text-mint-400 shrink-0" />
                             {fact}
                           </span>
                         ))}
@@ -383,12 +382,12 @@ export const ChatDrawer: React.FC<ChatDrawerProps> = ({
 
                   {/* Recommended Action Card */}
                   {!isUser && msg.recommended_action && (
-                    <div className="mt-2 p-2.5 bg-amber-50 border border-amber-200 rounded-md text-[11px] text-amber-900 space-y-1.5">
+                    <div className="mt-2 p-2.5 bg-navy-950 border border-amber-400/40 rounded-md text-[11px] text-amber-300 space-y-1.5 font-mono shadow-sm">
                       <div className="flex items-center gap-1.5 font-bold">
-                        <Clock className="w-3.5 h-3.5 text-amber-700" />
+                        <Clock className="w-3.5 h-3.5 text-amber-400" />
                         <span>Recommended Remediation:</span>
                       </div>
-                      <p className="font-mono text-[10px] text-amber-800">
+                      <p className="text-[10px] text-slateText-secondary">
                         {msg.recommended_action}
                       </p>
                       {onNavigateTab && (
@@ -397,97 +396,77 @@ export const ChatDrawer: React.FC<ChatDrawerProps> = ({
                             onNavigateTab('approvals');
                             onClose();
                           }}
-                          className="text-[11px] text-amber-800 hover:text-amber-950 font-bold underline flex items-center gap-1 pt-0.5"
+                          className="text-[11px] text-amber-400 hover:text-amber-300 font-bold underline flex items-center gap-1 pt-0.5"
                         >
-                          Review in Approvals Queue <ArrowRight className="w-3 h-3" />
+                          <span>Review in Human Approvals Queue</span>
+                          <ArrowRight className="w-3 h-3" />
                         </button>
                       )}
                     </div>
                   )}
 
-                  <div
-                    className={`text-[10px] text-right font-mono ${
-                      isUser ? 'text-blue-200' : 'text-slate-400'
-                    }`}
-                  >
+                  <div className="text-[10px] text-right font-mono text-slateText-muted pt-0.5">
                     {msg.timestamp}
                   </div>
                 </div>
-
-                {isUser && (
-                  <div className="w-7 h-7 rounded-md bg-blue-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-sm">
-                    <User className="w-3.5 h-3.5" />
-                  </div>
-                )}
               </div>
             );
           })}
 
-          {/* Typing Indicator */}
           {isSending && (
-            <div className="flex items-start gap-2.5">
-              <div className="w-7 h-7 rounded-md bg-violet-100 text-violet-700 flex items-center justify-center shrink-0 border border-violet-200">
-                <Bot className="w-3.5 h-3.5" />
+            <div className="flex gap-2.5 justify-start items-center text-xs text-violet-300 font-mono animate-pulse">
+              <div className="w-7 h-7 rounded bg-navy-850 border border-violet-400/40 text-violet-300 flex items-center justify-center">
+                <Sparkles className="w-3.5 h-3.5 animate-spin" />
               </div>
-              <div className="bg-white border border-slate-200 rounded-lg p-3 text-xs text-slate-500 shadow-sm flex items-center gap-2">
-                <RefreshCw className="w-3.5 h-3.5 animate-spin text-violet-600" />
-                <span className="font-medium">
-                  Gemma 4 is reasoning over Evolus AI (<span className="font-mono text-[11px]">gemma4 31B-it</span>)...
-                </span>
-              </div>
+              <span>Reasoning with Google Gemma 4 31B-it via Evolus AI...</span>
             </div>
           )}
 
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Suggested Quick Prompt Pills */}
-        <div className="px-4 py-2 border-t border-slate-100 bg-white space-y-1.5">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
-            Suggested Operational Queries:
+        {/* Context-aware Suggested Prompt Pills */}
+        <div className="p-2.5 border-t border-navy-700 bg-navy-900 overflow-x-auto whitespace-nowrap space-x-1.5 flex items-center">
+          <span className="text-[10px] font-mono text-slateText-muted uppercase shrink-0">
+            Suggested:
           </span>
-          <div className="flex flex-wrap gap-1.5">
-            {getSuggestedPrompts().map((prompt, pIdx) => (
-              <button
-                key={pIdx}
-                onClick={() => handleSendMessage(prompt)}
-                disabled={isSending}
-                className="text-[11px] px-2.5 py-1 rounded-full bg-slate-100 hover:bg-violet-50 hover:text-violet-700 hover:border-violet-200 text-slate-700 border border-slate-200 text-left transition-colors font-medium disabled:opacity-50"
-              >
-                {prompt}
-              </button>
-            ))}
-          </div>
+          {getSuggestedPrompts().map((prompt, pIdx) => (
+            <button
+              key={pIdx}
+              onClick={() => handleSendMessage(prompt)}
+              className="text-[11px] px-2 py-1 rounded bg-navy-850 border border-navy-700 hover:border-cyan-400/40 text-slateText-secondary hover:text-white transition-colors shrink-0 font-mono"
+            >
+              {prompt}
+            </button>
+          ))}
         </div>
 
-        {/* Message Input Box */}
-        <div className="p-3 border-t border-slate-200 bg-slate-50 space-y-2">
-          <div className="relative bg-white border border-slate-300 rounded-md focus-within:ring-2 focus-within:ring-violet-500/20 focus-within:border-violet-500 shadow-sm">
+        {/* Input Bar */}
+        <div className="p-3 border-t border-navy-700 bg-navy-850 space-y-2">
+          <div className="relative">
             <textarea
               rows={2}
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Ask Gemma 4 Copilot about delays, documents, or proposed tool actions..."
-              className="w-full text-xs p-2.5 pr-10 rounded-md resize-none focus:outline-none text-slate-800 placeholder:text-slate-400"
+              placeholder="Ask Copilot about bottlenecks, customs cutoffs, or recovery plans..."
+              className="w-full text-xs bg-navy-950 border border-navy-700 rounded-md p-2.5 pr-10 text-slateText-primary placeholder-slateText-muted focus:outline-none focus:border-cyan-400 font-sans resize-none"
             />
             <button
               onClick={() => handleSendMessage()}
               disabled={!inputMessage.trim() || isSending}
-              className="absolute right-2 bottom-2.5 p-1.5 rounded-md bg-violet-600 hover:bg-violet-700 text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              title="Send message"
+              className="absolute right-2.5 bottom-3 p-1.5 rounded bg-cyan-400 text-navy-950 font-bold hover:bg-cyan-300 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
             >
               <Send className="w-3.5 h-3.5" />
             </button>
           </div>
 
-          {/* Token Budget Footer Notice */}
-          <div className="flex items-center justify-between text-[10px] text-slate-400 font-mono">
-            <span>Model: gemma4 31B-it (Evolus AI)</span>
-            <span className="text-emerald-700 font-sans font-medium flex items-center gap-1">
-              <ShieldCheck className="w-3 h-3 text-emerald-600" />
-              DEC-008 Token Budget Preserved
+          <div className="flex items-center justify-between text-[10px] text-slateText-muted font-mono">
+            <span className="flex items-center gap-1">
+              <Lock className="w-3 h-3 text-cyan-400" />
+              <span>Input sanitized with &lt;user_data&gt; boundary delimiters (RULE-F02)</span>
             </span>
+            <span>Press Enter to send</span>
           </div>
         </div>
       </div>

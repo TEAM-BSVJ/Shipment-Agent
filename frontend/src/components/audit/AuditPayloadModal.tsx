@@ -1,14 +1,5 @@
-import React, { useState } from 'react';
-import {
-  Bot,
-  Check,
-  Clock,
-  Code,
-  Copy,
-  Database,
-  ShieldCheck,
-  User,
-} from 'lucide-react';
+import React from 'react';
+import { Copy, Check, Terminal, Database, Clock, User, ShieldCheck } from 'lucide-react';
 import { Button, Modal } from '../common';
 import { AuditLogEntry } from '../../types';
 
@@ -23,142 +14,91 @@ export const AuditPayloadModal: React.FC<AuditPayloadModalProps> = ({
   onClose,
   entry,
 }) => {
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = React.useState(false);
 
   if (!entry) return null;
 
-  const handleCopyJson = () => {
-    try {
-      navigator.clipboard.writeText(JSON.stringify(entry, null, 2));
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // Fallback
-    }
+  const jsonString = JSON.stringify(entry.details || {}, null, 2);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(jsonString);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
-  const formatTimestamp = (iso?: string) => {
-    if (!iso) return 'Recent';
-    try {
-      const d = new Date(iso);
-      return d.toUTCString();
-    } catch {
-      return iso;
+  const getActorBadge = (actorType: string) => {
+    switch (actorType.toUpperCase()) {
+      case 'AGENT':
+        return 'bg-violet-400/20 text-violet-300 border-violet-400/40';
+      case 'USER':
+        return 'bg-mint-400/20 text-mint-400 border-mint-400/40';
+      case 'SYSTEM':
+        return 'bg-cyan-400/20 text-cyan-400 border-cyan-400/40';
+      default:
+        return 'bg-amber-400/20 text-amber-400 border-amber-400/40';
     }
   };
-
-  const isAgent = entry.actor_type.toUpperCase() === 'AGENT';
-  const isUser = entry.actor_type.toUpperCase() === 'USER';
 
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Immutable Audit Entry Inspection"
-      description="Cryptographically referenced PostgreSQL audit log record (RULE-A04 compliance)."
+      title="Audit Event Details & Payload"
+      description="Cryptographically tracked immutable event log entry."
       maxWidth="xl"
     >
       <div className="space-y-4">
-        {/* Compliance Verification Pill */}
-        <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-md flex items-center justify-between">
-          <div className="flex items-center gap-2 text-xs font-semibold text-emerald-900">
-            <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-            <span>Verified Append-Only PostgreSQL Log Entry</span>
-          </div>
-          <span className="text-[10px] font-mono bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded border border-emerald-300 font-bold">
-            IMMUTABLE
-          </span>
-        </div>
-
-        {/* Metadata Grid */}
-        <div className="grid grid-cols-2 gap-2 text-xs">
-          <div className="bg-slate-50 p-2.5 rounded border border-slate-200">
-            <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">
-              Action Recorded
-            </span>
-            <span className="font-mono font-bold text-slate-900">{entry.action}</span>
+        {/* Event Header Summary */}
+        <div className="p-3.5 bg-navy-900 border border-navy-700 rounded-md grid grid-cols-2 gap-2 text-xs font-mono">
+          <div>
+            <span className="text-[10px] text-slateText-muted uppercase block">Action Name</span>
+            <span className="font-bold text-white">{entry.action}</span>
           </div>
 
-          <div className="bg-slate-50 p-2.5 rounded border border-slate-200">
-            <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">
-              Actor Identity
+          <div>
+            <span className="text-[10px] text-slateText-muted uppercase block">Actor Entity</span>
+            <span className={`inline-block px-1.5 py-0.5 rounded border text-[10px] font-bold ${getActorBadge(entry.actor_type)}`}>
+              {entry.actor_type}: {entry.actor_id}
             </span>
-            <div className="flex items-center gap-1.5 font-medium text-slate-800">
-              {isAgent ? (
-                <Bot className="w-3.5 h-3.5 text-violet-600" />
-              ) : isUser ? (
-                <User className="w-3.5 h-3.5 text-emerald-600" />
-              ) : (
-                <Database className="w-3.5 h-3.5 text-blue-600" />
-              )}
-              <span className="font-mono text-[11px] truncate">{entry.actor_id}</span>
-              <span className="text-[10px] px-1 rounded bg-slate-200 text-slate-700">
-                {entry.actor_type}
-              </span>
-            </div>
           </div>
 
-          <div className="bg-slate-50 p-2.5 rounded border border-slate-200">
-            <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">
-              Target Entity
-            </span>
-            <div className="flex items-center gap-1.5 font-mono text-slate-800 text-[11px]">
-              <span className="capitalize font-bold text-blue-700 bg-blue-50 px-1.5 py-0.2 rounded border border-blue-200 text-[10px]">
-                {entry.entity_type}
-              </span>
-              <span className="truncate" title={entry.entity_id}>
-                {entry.entity_id}
-              </span>
-            </div>
+          <div>
+            <span className="text-[10px] text-slateText-muted uppercase block">Target Entity</span>
+            <span className="text-cyan-400 font-semibold">{entry.entity_type}</span>
+            <span className="text-slateText-muted ml-1 text-[10px]">({entry.entity_id})</span>
           </div>
 
-          <div className="bg-slate-50 p-2.5 rounded border border-slate-200">
-            <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">
-              Committed Timestamp (UTC)
-            </span>
-            <span className="font-mono text-slate-800 text-[11px] flex items-center gap-1">
-              <Clock className="w-3 h-3 text-slate-400" />
-              {formatTimestamp(entry.created_at)}
-            </span>
+          <div>
+            <span className="text-[10px] text-slateText-muted uppercase block">Timestamp (UTC)</span>
+            <span className="text-slateText-primary">{entry.created_at}</span>
           </div>
         </div>
 
-        {/* JSON Details Inspector */}
-        <div className="space-y-1.5">
-          <div className="flex items-center justify-between text-xs">
-            <span className="font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-              <Code className="w-3.5 h-3.5 text-slate-500" /> Structured Context Payload (JSON)
+        {/* JSON Payload Inspector */}
+        <div>
+          <div className="flex items-center justify-between pb-1.5 mb-1 border-b border-navy-700">
+            <span className="text-xs font-bold text-slateText-muted font-mono uppercase flex items-center gap-1.5">
+              <Terminal className="w-3.5 h-3.5 text-cyan-400" /> Event Payload JSON
             </span>
-            <button
-              onClick={handleCopyJson}
-              className="text-slate-500 hover:text-slate-800 flex items-center gap-1 text-[11px] font-medium"
+            <Button
+              variant="secondary"
+              size="sm"
+              leftIcon={copied ? <Check className="w-3.5 h-3.5 text-mint-400" /> : <Copy className="w-3.5 h-3.5" />}
+              onClick={handleCopy}
+              className="py-1 px-2 text-[11px]"
             >
-              {copied ? (
-                <>
-                  <Check className="w-3 h-3 text-emerald-600" />
-                  <span className="text-emerald-700">Copied!</span>
-                </>
-              ) : (
-                <>
-                  <Copy className="w-3 h-3" />
-                  <span>Copy Payload</span>
-                </>
-              )}
-            </button>
+              {copied ? 'Copied' : 'Copy JSON'}
+            </Button>
           </div>
 
-          <div className="bg-slate-900 rounded-md p-3.5 text-slate-200 font-mono text-[11px] overflow-x-auto max-h-72 border border-slate-800">
-            <pre>{JSON.stringify(entry.details, null, 2)}</pre>
-          </div>
+          <pre className="p-3.5 rounded bg-navy-950 border border-navy-800 text-cyan-300 overflow-x-auto text-xs font-mono max-h-72 leading-relaxed">
+            {jsonString}
+          </pre>
         </div>
 
-        {/* Modal Actions */}
-        <div className="flex items-center justify-between pt-3 border-t border-slate-100">
-          <div className="text-[10px] text-slate-400 font-mono">
-            UUID: {entry.id}
-          </div>
+        <div className="flex items-center justify-end pt-2 border-t border-navy-700/60">
           <Button variant="secondary" size="sm" onClick={onClose}>
-            Close Inspection
+            Close Inspector
           </Button>
         </div>
       </div>

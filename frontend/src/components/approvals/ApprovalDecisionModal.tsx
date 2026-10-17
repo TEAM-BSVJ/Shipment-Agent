@@ -47,8 +47,8 @@ export const ApprovalDecisionModal: React.FC<ApprovalDecisionModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!reason.trim()) {
-      setErrorMsg('Audit compliance requires a documented decision rationale.');
+    if (!reason.trim() || reason.trim().length < 5) {
+      setErrorMsg('Audit compliance requires a documented decision rationale (at least 5 characters).');
       return;
     }
 
@@ -56,7 +56,6 @@ export const ApprovalDecisionModal: React.FC<ApprovalDecisionModalProps> = ({
       setIsSubmitting(true);
       setErrorMsg(null);
 
-      // Attempt backend API call
       try {
         await approvalService.decideApproval(approval.id, {
           decision,
@@ -97,167 +96,117 @@ export const ApprovalDecisionModal: React.FC<ApprovalDecisionModalProps> = ({
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Compliance Policy Banner */}
-        <div className="p-3 bg-amber-50 border border-amber-200 rounded-md flex items-start gap-2.5">
-          <ShieldAlert className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
-          <div className="text-xs text-amber-900 leading-relaxed">
-            <span className="font-bold">RULE-E06 Consequential Action Gating:</span> This remediation step alters
-            milestone schedules or triggers external EDI automation. Human operator review is legally binding and
-            recorded in the PostgreSQL immutable audit trail.
+        <div className="p-3 bg-amber-400/15 border border-amber-400/40 rounded-md flex items-start gap-2.5">
+          <ShieldAlert className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+          <div className="text-xs text-amber-200">
+            <p className="font-semibold text-amber-300 font-mono">CONSEQUENTIAL ACTION GATEWAY</p>
+            <p className="text-[11px] text-slateText-secondary mt-0.5">
+              This action modifies shipment milestone schedules or triggers autonomous external carrier notifications. Your decision and rationale will be permanently recorded in the immutable audit log.
+            </p>
           </div>
         </div>
 
-        {/* Action Details Card */}
-        <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-md space-y-2.5">
+        {/* Proposed Action Context */}
+        <div className="p-3.5 bg-navy-900 border border-navy-700 rounded-md space-y-2">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="font-mono font-bold text-xs text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded">
-                {approval.tracking_number || 'SHIPMENT'}
-              </span>
-              <span className="text-xs font-bold text-slate-800">
-                {approval.action_type?.replace(/_/g, ' ') || 'CORRECTIVE ACTION'}
-              </span>
+            <span className="font-mono text-xs font-bold text-cyan-400 bg-navy-950 border border-cyan-400/30 px-2 py-0.5 rounded">
+              {approval.tracking_number}
+            </span>
+            <div className="flex items-center gap-1.5">
+              <StatusBadge status={approval.risk_level || 'HIGH'} size="sm" />
+              <StatusBadge status={approval.action_status || 'PENDING'} size="sm" />
             </div>
-            <StatusBadge status={approval.decision} size="sm" />
           </div>
 
-          {approval.origin && approval.destination && (
-            <p className="text-xs text-slate-600">
-              Route: <span className="font-semibold text-slate-800">{approval.origin}</span> →{' '}
-              <span className="font-semibold text-slate-800">{approval.destination}</span> ({approval.mode} freight)
+          <div className="text-xs space-y-1">
+            <p className="text-slateText-muted font-mono">
+              Action: <strong className="text-white font-mono">{approval.action_type}</strong> (Tool: <span className="text-cyan-400 font-mono">{approval.tool_used}</span>)
             </p>
-          )}
-
-          {/* Action Parameters Table/Grid */}
-          {approval.input_data && Object.keys(approval.input_data).length > 0 && (
-            <div className="p-2.5 bg-white border border-slate-200 rounded text-xs space-y-1">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
-                Proposed Action Parameters (Tool: {approval.tool_used}):
-              </span>
-              <div className="grid grid-cols-2 gap-2 text-[11px] font-mono">
-                {Object.entries(approval.input_data).map(([k, v]) => (
-                  <div key={k} className="bg-slate-50 p-1.5 rounded border border-slate-100">
-                    <span className="text-slate-400 block text-[10px]">{k}</span>
-                    <span className="text-slate-800 font-semibold">{String(v)}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Justification & Exception Info */}
-          {approval.exception_description && (
-            <div className="text-xs text-slate-700">
-              <span className="font-semibold text-slate-900">Trigger Exception:</span> {approval.exception_description}
-            </div>
-          )}
-
-          {approval.reason && (
-            <div className="text-xs text-slate-600 italic bg-amber-50/50 p-2 rounded border border-amber-100">
-              <span className="font-semibold text-slate-800 not-italic">Policy Gate Rationale:</span> {approval.reason}
-            </div>
-          )}
+            <p className="text-slateText-primary font-medium">{approval.reason}</p>
+          </div>
         </div>
 
         {errorMsg && (
-          <div className="p-2.5 bg-red-50 border border-red-200 rounded text-xs text-red-700 flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
+          <div className="p-3 bg-coral-400/20 border border-coral-400/50 rounded-md text-xs text-coral-400 flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-coral-400 shrink-0" />
             <span>{errorMsg}</span>
           </div>
         )}
 
         {/* Decision Toggle */}
         <div>
-          <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-            Operator Decision *
+          <label className="block text-xs font-semibold text-slateText-muted mb-1 font-mono uppercase">
+            Supervisor Decision
           </label>
           <div className="grid grid-cols-2 gap-3">
             <button
               type="button"
               onClick={() => setDecision('APPROVED')}
-              className={`p-3 rounded-md border text-left flex items-start gap-2.5 transition-all ${
+              className={`p-3 rounded-md border flex items-center justify-center gap-2 text-xs font-bold transition-all ${
                 isApproved
-                  ? 'bg-emerald-50 border-emerald-500 text-emerald-950 ring-2 ring-emerald-500/20'
-                  : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                  ? 'bg-mint-400/20 border-mint-400 text-mint-400 shadow-glow-mint'
+                  : 'bg-navy-900 border-navy-700 text-slateText-muted hover:text-white'
               }`}
             >
-              <CheckCircle2
-                className={`w-5 h-5 shrink-0 ${isApproved ? 'text-emerald-600' : 'text-slate-400'}`}
-              />
-              <div>
-                <p className="text-xs font-bold">Authorize & Execute Action</p>
-                <p className="text-[11px] text-slate-500 mt-0.5">
-                  Approve remediation and allow tool execution.
-                </p>
-              </div>
+              <CheckCircle2 className="w-4 h-4 text-mint-400" />
+              <span>Authorize & Execute</span>
             </button>
 
             <button
               type="button"
               onClick={() => setDecision('REJECTED')}
-              className={`p-3 rounded-md border text-left flex items-start gap-2.5 transition-all ${
+              className={`p-3 rounded-md border flex items-center justify-center gap-2 text-xs font-bold transition-all ${
                 !isApproved
-                  ? 'bg-red-50 border-red-500 text-red-950 ring-2 ring-red-500/20'
-                  : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                  ? 'bg-coral-400/20 border-coral-400 text-coral-400 shadow-glow-coral'
+                  : 'bg-navy-900 border-navy-700 text-slateText-muted hover:text-white'
               }`}
             >
-              <XCircle className={`w-5 h-5 shrink-0 ${!isApproved ? 'text-red-600' : 'text-slate-400'}`} />
-              <div>
-                <p className="text-xs font-bold">Reject Action</p>
-                <p className="text-[11px] text-slate-500 mt-0.5">
-                  Decline proposed action and halt execution.
-                </p>
-              </div>
+              <XCircle className="w-4 h-4 text-coral-400" />
+              <span>Reject Action</span>
             </button>
           </div>
         </div>
 
-        {/* Reviewer Reason / Audit Notes */}
+        {/* Reason / Rationale Input */}
         <div>
-          <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-            Audit Documentation & Reason Note *
+          <label className="block text-xs font-semibold text-slateText-muted mb-1 font-mono uppercase">
+            Operational Justification (Required for Audit Compliance)
           </label>
           <textarea
             rows={3}
             value={reason}
             onChange={(e) => setReason(e.target.value)}
-            placeholder="Document operator justification for compliance log (mandatory)..."
-            className="w-full text-xs p-2.5 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-800"
+            placeholder="Explain why this decision is being made..."
+            className="w-full text-xs bg-navy-950 border border-navy-700 rounded-md p-2.5 text-slateText-primary focus:outline-none focus:border-cyan-400 font-sans"
           />
         </div>
 
-        {/* Reviewer Identification */}
+        {/* Reviewer Sign-off */}
         <div>
-          <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-            Authorized Reviewer Email / Badge ID
+          <label className="block text-xs font-semibold text-slateText-muted mb-1 font-mono uppercase">
+            Authorized Operations Lead ID
           </label>
           <input
             type="text"
             value={reviewerId}
             onChange={(e) => setReviewerId(e.target.value)}
-            placeholder="operator@company.com"
-            className="w-full text-xs p-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-800 font-mono"
+            className="w-full text-xs bg-navy-950 border border-navy-700 rounded-md p-2 text-slateText-primary focus:outline-none focus:border-cyan-400 font-mono"
           />
         </div>
 
-        {/* Modal Footer */}
-        <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
-          <Button type="button" variant="secondary" size="sm" onClick={onClose} disabled={isSubmitting}>
+        {/* Modal Controls */}
+        <div className="flex items-center justify-end gap-2 pt-3 border-t border-navy-700/60">
+          <Button variant="secondary" size="sm" type="button" onClick={onClose} disabled={isSubmitting}>
             Cancel
           </Button>
           <Button
-            type="submit"
-            variant={isApproved ? 'primary' : 'danger'}
+            variant={isApproved ? 'mint' : 'danger'}
             size="sm"
+            type="submit"
             isLoading={isSubmitting}
-            leftIcon={
-              isApproved ? (
-                <ShieldCheck className="w-3.5 h-3.5 text-white" />
-              ) : (
-                <XCircle className="w-3.5 h-3.5 text-white" />
-              )
-            }
+            leftIcon={isApproved ? <CheckCircle2 className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
           >
-            {isApproved ? 'Authorize & Execute' : 'Confirm Rejection'}
+            {isApproved ? 'Sign & Authorize Action' : 'Confirm Action Rejection'}
           </Button>
         </div>
       </form>

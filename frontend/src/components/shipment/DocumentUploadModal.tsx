@@ -88,20 +88,20 @@ export const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
     >
       <form onSubmit={handleUpload} className="space-y-4">
         {errorMessage && (
-          <div className="p-3 bg-red-50 border border-red-200 rounded-md text-xs text-red-700 flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
+          <div className="p-3 bg-coral-400/20 border border-coral-400/50 rounded-md text-xs text-coral-400 flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-coral-400 shrink-0" />
             <span>{errorMessage}</span>
           </div>
         )}
 
         <div>
-          <label className="block text-xs font-semibold text-slate-700 mb-1">
+          <label className="block text-xs font-semibold text-slateText-muted mb-1 font-mono uppercase">
             Document Category
           </label>
           <select
             value={documentType}
             onChange={(e) => setDocumentType(e.target.value as DocumentType)}
-            className="w-full text-xs bg-slate-50 border border-slate-200 rounded-md p-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+            className="w-full text-xs bg-navy-950 border border-navy-700 rounded-md p-2 text-slateText-primary focus:outline-none focus:border-cyan-400 font-mono"
           >
             <option value="COMMERCIAL_INVOICE">Commercial Invoice</option>
             <option value="PACKING_LIST">Packing List</option>
@@ -114,10 +114,10 @@ export const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-slate-700 mb-1">
+          <label className="block text-xs font-semibold text-slateText-muted mb-1 font-mono uppercase">
             File Binary (PDF, PNG, JPEG ≤ 10MB)
           </label>
-          <div className="border-2 border-dashed border-slate-200 rounded-md p-6 text-center hover:border-slate-300 transition-colors bg-slate-50/50">
+          <div className="border-2 border-dashed border-navy-700 rounded-md p-6 text-center hover:border-cyan-400/50 transition-colors bg-navy-900/60">
             <input
               type="file"
               accept=".pdf,.png,.jpg,.jpeg"
@@ -129,24 +129,24 @@ export const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
               htmlFor="file-upload-input"
               className="cursor-pointer flex flex-col items-center justify-center space-y-2"
             >
-              <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-full bg-navy-850 border border-navy-700 text-cyan-400 flex items-center justify-center shadow-sm">
                 <FileUp className="w-5 h-5" />
               </div>
-              <p className="text-xs font-medium text-slate-700">
+              <p className="text-xs font-medium text-slateText-primary">
                 {selectedFile ? (
-                  <span className="font-mono font-bold text-blue-600">{selectedFile.name}</span>
+                  <span className="font-mono font-bold text-cyan-400">{selectedFile.name}</span>
                 ) : (
                   <>
-                    <span className="text-blue-600 underline">Click to choose a file</span> or drag & drop
+                    <span className="text-cyan-400 underline">Click to choose a file</span> or drag & drop
                   </>
                 )}
               </p>
-              <p className="text-[11px] text-slate-400">PDF, PNG, JPEG up to 10 MB</p>
+              <p className="text-[11px] text-slateText-muted font-mono">PDF, PNG, JPEG up to 10 MB</p>
             </label>
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+        <div className="flex items-center justify-end gap-2 pt-3 border-t border-navy-700/60">
           <Button variant="secondary" size="sm" type="button" onClick={onClose} disabled={isLoading}>
             Cancel
           </Button>

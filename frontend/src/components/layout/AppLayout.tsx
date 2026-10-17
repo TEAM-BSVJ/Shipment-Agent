@@ -1,6 +1,6 @@
 import React from 'react';
-import { Navbar } from './Navbar';
-import { NavTab, Sidebar } from './Sidebar';
+import { TopTelemetryBar } from './TopTelemetryBar';
+import { NavRail, NavTab } from './NavRail';
 
 interface AppLayoutProps {
   activeTab: NavTab;
@@ -8,6 +8,8 @@ interface AppLayoutProps {
   exceptionCount?: number;
   approvalCount?: number;
   onOpenChat: () => void;
+  onOpenSearch?: () => void;
+  onNavigateExceptions?: () => void;
   children: React.ReactNode;
 }
 
@@ -17,19 +19,33 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   exceptionCount = 0,
   approvalCount = 0,
   onOpenChat,
+  onOpenSearch,
+  onNavigateExceptions,
   children,
 }) => {
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
-      <Navbar onOpenChat={onOpenChat} />
-      <div className="flex flex-1">
-        <Sidebar
+    <div className="min-h-screen bg-navy-950 text-slateText-primary flex flex-col font-sans select-none">
+      {/* Fixed Top Telemetry Bar */}
+      <TopTelemetryBar
+        onOpenChat={onOpenChat}
+        onOpenSearch={onOpenSearch}
+        exceptionCount={exceptionCount}
+        approvalCount={approvalCount}
+        onNavigateExceptions={onNavigateExceptions}
+      />
+
+      {/* Main Workspace Frame */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Collapsible Left Command Rail */}
+        <NavRail
           activeTab={activeTab}
           onTabChange={onTabChange}
           exceptionCount={exceptionCount}
           approvalCount={approvalCount}
         />
-        <main className="flex-1 p-6 max-w-7xl w-full mx-auto overflow-y-auto">
+
+        {/* Dynamic Operational Viewport */}
+        <main className="flex-1 p-4 sm:p-6 w-full max-w-[1720px] mx-auto overflow-y-auto">
           {children}
         </main>
       </div>

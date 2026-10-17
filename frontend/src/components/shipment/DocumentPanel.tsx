@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import {
   AlertTriangle,
   FileCheck,
@@ -41,7 +41,7 @@ export const DocumentPanel: React.FC<DocumentPanelProps> = ({
     }
   };
 
-  // Cross-document weight comparison between Commercial Invoice and Packing List
+  // Cross-document weight comparison
   const invoiceDoc = documents.find((d) => d.document_type === 'COMMERCIAL_INVOICE');
   const packingDoc = documents.find((d) => d.document_type === 'PACKING_LIST');
   const invoiceWeight = invoiceDoc?.extracted_fields?.total_weight_kg;
@@ -62,14 +62,14 @@ export const DocumentPanel: React.FC<DocumentPanelProps> = ({
   return (
     <div className="space-y-4">
       {/* Header with Upload Action */}
-      <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+      <div className="flex items-center justify-between pb-3 border-b border-navy-700">
         <div>
-          <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-            <FileText className="w-4 h-4 text-blue-600" />
+          <h4 className="text-sm font-bold text-white flex items-center gap-2 font-mono">
+            <FileText className="w-4 h-4 text-cyan-400" />
             Shipping Paperwork & Customs Filings
           </h4>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Deterministic field extraction and cross-document reconciliation (0.5 kg tolerance).
+          <p className="text-xs text-slateText-secondary mt-0.5">
+            Deterministic field extraction and cross-document reconciliation (0.5 kg threshold).
           </p>
         </div>
 
@@ -85,23 +85,23 @@ export const DocumentPanel: React.FC<DocumentPanelProps> = ({
 
       {/* Discrepancy Alert Banner */}
       {hasWeightDiscrepancy && (
-        <div className="p-3.5 bg-red-50 border border-red-200 rounded-md text-xs text-red-800 space-y-1">
-          <div className="flex items-center gap-2 font-bold text-red-900">
-            <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+        <div className="p-3.5 bg-coral-400/20 border border-coral-400/50 rounded-md text-xs text-coral-300 space-y-1 shadow-glow-coral animate-in fade-in">
+          <div className="flex items-center gap-2 font-bold text-coral-400 font-mono">
+            <AlertTriangle className="w-4 h-4 text-coral-400 shrink-0" />
             <span>WEIGHT MISMATCH DISCREPANCY DETECTED</span>
           </div>
-          <p className="text-[11px] text-red-700">
-            Commercial Invoice declares <span className="font-mono font-bold">{invoiceWeight} kg</span>, but Packing List specifies <span className="font-mono font-bold">{packingWeight} kg</span> (discrepancy: <span className="font-mono font-bold">{weightDelta} kg</span>). This exceeds the 0.5 kg tolerance and causes customs clearance holds.
+          <p className="text-[11px] text-coral-200">
+            Commercial Invoice declares <span className="font-mono font-bold text-white">{invoiceWeight} kg</span>, but Packing List specifies <span className="font-mono font-bold text-white">{packingWeight} kg</span> (discrepancy delta: <span className="font-mono font-bold text-coral-400">{weightDelta} kg</span>). This exceeds the 0.5 kg tolerance and causes customs clearance holds.
           </p>
         </div>
       )}
 
       {/* Document Cards List */}
       {documents.length === 0 ? (
-        <div className="p-8 text-center bg-slate-50 border border-slate-200 rounded-md">
-          <FileWarning className="w-8 h-8 text-slate-400 mx-auto mb-2" />
-          <p className="text-xs font-semibold text-slate-700">No documents uploaded</p>
-          <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+        <div className="p-8 text-center bg-navy-900 border border-navy-700 rounded-md">
+          <FileWarning className="w-8 h-8 text-slateText-muted mx-auto mb-2" />
+          <p className="text-xs font-semibold text-slateText-primary">No documents uploaded</p>
+          <p className="text-xs text-slateText-secondary mt-1 max-w-sm mx-auto">
             Mandatory documents (Commercial Invoice, Packing List) are required before customs inspection cutoffs.
           </p>
           <Button
@@ -123,19 +123,19 @@ export const DocumentPanel: React.FC<DocumentPanelProps> = ({
             return (
               <div
                 key={doc.id}
-                className="bg-white border border-slate-200 rounded-md p-4 shadow-xs space-y-3 flex flex-col justify-between"
+                className="bg-navy-850 border border-navy-700 rounded-md p-4 shadow-sm space-y-3 flex flex-col justify-between hover:border-navy-600 transition-all"
               >
                 <div>
                   <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center text-slate-600">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded bg-navy-900 border border-navy-700 flex items-center justify-center text-cyan-400 shrink-0">
                         <FileCheck className="w-4 h-4" />
                       </div>
                       <div>
-                        <h5 className="text-xs font-bold text-slate-900 font-sans">
+                        <h5 className="text-xs font-bold text-white font-mono">
                           {doc.document_type.replace(/_/g, ' ')}
                         </h5>
-                        <p className="text-[10px] text-slate-400 font-mono truncate max-w-[180px]">
+                        <p className="text-[10px] text-slateText-muted font-mono truncate max-w-[170px]">
                           {doc.file_ref.split(/[/\\]/).pop()}
                         </p>
                       </div>
@@ -146,11 +146,11 @@ export const DocumentPanel: React.FC<DocumentPanelProps> = ({
 
                   {/* Extracted Fields Metadata */}
                   {fields ? (
-                    <div className="mt-3 pt-3 border-t border-slate-100 grid grid-cols-2 gap-2 text-[11px]">
+                    <div className="mt-3 pt-3 border-t border-navy-700/60 grid grid-cols-2 gap-2 text-[11px]">
                       {fields.invoice_number && (
                         <div>
-                          <span className="text-slate-400 block text-[10px]">Invoice #</span>
-                          <span className="font-mono font-medium text-slate-800">
+                          <span className="text-slateText-muted block text-[10px] font-mono">Invoice #</span>
+                          <span className="font-mono font-medium text-slateText-primary">
                             {fields.invoice_number}
                           </span>
                         </div>
@@ -158,10 +158,10 @@ export const DocumentPanel: React.FC<DocumentPanelProps> = ({
 
                       {fields.total_weight_kg !== undefined && fields.total_weight_kg !== null && (
                         <div>
-                          <span className="text-slate-400 block text-[10px] flex items-center gap-1">
-                            <Scale className="w-3 h-3 text-slate-400" /> Gross Weight
+                          <span className="text-slateText-muted block text-[10px] font-mono flex items-center gap-1">
+                            <Scale className="w-3 h-3 text-cyan-400" /> Gross Wt
                           </span>
-                          <span className="font-mono font-bold text-slate-900">
+                          <span className="font-mono font-bold text-white">
                             {fields.total_weight_kg} kg
                           </span>
                         </div>
@@ -169,8 +169,8 @@ export const DocumentPanel: React.FC<DocumentPanelProps> = ({
 
                       {fields.consignee && (
                         <div className="col-span-2">
-                          <span className="text-slate-400 block text-[10px]">Consignee</span>
-                          <span className="font-medium text-slate-800 truncate block">
+                          <span className="text-slateText-muted block text-[10px] font-mono">Consignee</span>
+                          <span className="font-medium text-slateText-secondary truncate block">
                             {fields.consignee}
                           </span>
                         </div>
@@ -178,32 +178,32 @@ export const DocumentPanel: React.FC<DocumentPanelProps> = ({
 
                       {fields.declared_value !== undefined && fields.declared_value !== null && (
                         <div>
-                          <span className="text-slate-400 block text-[10px]">Declared Value</span>
-                          <span className="font-mono font-medium text-slate-800">
+                          <span className="text-slateText-muted block text-[10px] font-mono">Declared Value</span>
+                          <span className="font-mono font-medium text-mint-400">
                             ${fields.declared_value} {fields.currency || 'USD'}
                           </span>
                         </div>
                       )}
                     </div>
                   ) : (
-                    <div className="mt-3 pt-3 border-t border-slate-100 text-[11px] text-slate-400 italic">
+                    <div className="mt-3 pt-3 border-t border-navy-700/60 text-[11px] text-slateText-disabled italic font-mono">
                       No structured fields extracted yet.
                     </div>
                   )}
                 </div>
 
-                <div className="flex items-center justify-between pt-3 border-t border-slate-100 text-[11px]">
-                  <span className="text-slate-400 font-mono">
-                    Confidence: {(doc.confidence * 100).toFixed(0)}%
+                <div className="flex items-center justify-between pt-3 border-t border-navy-700/60 text-[11px]">
+                  <span className="text-slateText-muted font-mono">
+                    Confidence: <span className="text-cyan-400 font-semibold">{(doc.confidence * 100).toFixed(0)}%</span>
                   </span>
 
                   <Button
                     variant="ghost"
                     size="sm"
                     isLoading={isExtracting}
-                    leftIcon={<RefreshCw className="w-3 h-3" />}
+                    leftIcon={<RefreshCw className="w-3 h-3 text-cyan-400" />}
                     onClick={() => handleExtract(doc.id)}
-                    className="text-[11px] py-1 px-2 text-blue-600 hover:text-blue-800"
+                    className="text-[11px] py-1 px-2 text-cyan-400 hover:text-cyan-300"
                   >
                     Re-Extract
                   </Button>

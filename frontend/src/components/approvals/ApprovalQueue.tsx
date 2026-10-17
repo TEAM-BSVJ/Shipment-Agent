@@ -1,16 +1,16 @@
 import React, { useState, useMemo } from 'react';
 import {
-  Bot,
   CheckCircle2,
   ExternalLink,
   Eye,
   RefreshCw,
-  RotateCcw,
   Search,
   ShieldAlert,
   ShieldCheck,
   X,
   XCircle,
+  Clock,
+  Sparkles,
 } from 'lucide-react';
 import { EnrichedApproval } from '../../types';
 import { Button, StatusBadge } from '../common';
@@ -41,12 +41,9 @@ export const ApprovalQueue: React.FC<ApprovalQueueProps> = ({
   // Filtered approvals
   const filteredApprovals = useMemo(() => {
     return approvals.filter((item) => {
-      // Tab filter
       if (activeTab !== 'ALL' && item.decision !== activeTab) {
         return false;
       }
-
-      // Search query
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
         const matchesTracking = (item.tracking_number || '').toLowerCase().includes(q);
@@ -57,380 +54,218 @@ export const ApprovalQueue: React.FC<ApprovalQueueProps> = ({
           return false;
         }
       }
-
       return true;
     });
   }, [approvals, activeTab, searchQuery]);
 
-  // Counts
-  const stats = useMemo(() => {
+  // Aggregate Counters
+  const counts = useMemo(() => {
     const pending = approvals.filter((a) => a.decision === 'PENDING').length;
     const approved = approvals.filter((a) => a.decision === 'APPROVED').length;
     const rejected = approvals.filter((a) => a.decision === 'REJECTED').length;
-    const total = approvals.length;
-    return { pending, approved, rejected, total };
+    return { pending, approved, rejected, total: approvals.length };
   }, [approvals]);
 
-  const handleOpenModal = (approval: EnrichedApproval, decision: 'APPROVED' | 'REJECTED') => {
-    setActiveModalApproval(approval);
-    setModalInitialDecision(decision);
-  };
-
-  const formatTime = (iso?: string | null) => {
-    if (!iso) return 'Recent';
+  const formatTime = (iso?: string) => {
+    if (!iso) return '—';
     try {
       const d = new Date(iso);
-      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', month: 'short', day: 'numeric' });
+      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) + ' UTC';
     } catch {
       return iso;
     }
   };
 
+  const handleOpenDecision = (item: EnrichedApproval, initialDec: 'APPROVED' | 'REJECTED') => {
+    setActiveModalApproval(item);
+    setModalInitialDecision(initialDec);
+  };
+
   return (
     <div className="space-y-4">
-      {/* Metrics Row */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="bg-white border border-slate-200 rounded-md p-3.5 shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-amber-700 uppercase tracking-wider">
-              Pending Authorization
-            </span>
-            <ShieldAlert className="w-4 h-4 text-amber-600" />
-          </div>
-          <p className="text-2xl font-bold text-amber-800 mt-1">{stats.pending}</p>
-          <span className="text-[11px] text-slate-400">Action blocked until signed off</span>
-        </div>
-
-        <div className="bg-white border border-slate-200 rounded-md p-3.5 shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-emerald-700 uppercase tracking-wider">
-              Executed & Approved
-            </span>
-            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-          </div>
-          <p className="text-2xl font-bold text-emerald-700 mt-1">{stats.approved}</p>
-          <span className="text-[11px] text-slate-400">Remediations executed</span>
-        </div>
-
-        <div className="bg-white border border-slate-200 rounded-md p-3.5 shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-600 uppercase tracking-wider">
-              Rejected / Declined
-            </span>
-            <XCircle className="w-4 h-4 text-slate-500" />
-          </div>
-          <p className="text-2xl font-bold text-slate-700 mt-1">{stats.rejected}</p>
-          <span className="text-[11px] text-slate-400">Prevented unsafe changes</span>
-        </div>
-
-        <div className="bg-white border border-slate-200 rounded-md p-3.5 shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-              Total Decision Audits
-            </span>
-            <ShieldCheck className="w-4 h-4 text-slate-400" />
-          </div>
-          <p className="text-2xl font-bold text-slate-900 mt-1">{stats.total}</p>
-          <span className="text-[11px] text-slate-400">RULE-E06 compliance logs</span>
-        </div>
-      </div>
-
-      {/* Filter and Tab Navigation Bar */}
-      <div className="bg-white border border-slate-200 rounded-md p-3 shadow-sm space-y-3">
-        <div className="flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center justify-between">
-          {/* Navigation Tabs */}
-          <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-md text-xs font-medium">
+      {/* Top Counters & Filter Bar */}
+      <div className="bg-navy-900 border border-navy-700 rounded-md p-3.5 space-y-3 shadow-md">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          {/* Status Tabs */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
             <button
               onClick={() => setActiveTab('PENDING')}
-              className={`px-3 py-1.5 rounded transition-all flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded text-xs font-mono font-bold transition-all flex items-center gap-1.5 ${
                 activeTab === 'PENDING'
-                  ? 'bg-white text-slate-900 font-bold shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-amber-400 text-navy-950 shadow-glow-amber'
+                  : 'bg-navy-850 text-slateText-secondary border border-navy-700 hover:text-white'
               }`}
             >
-              <span>Pending Action</span>
-              {stats.pending > 0 && (
-                <span className="px-1.5 py-0.2 rounded-full bg-amber-500 text-white font-bold text-[10px]">
-                  {stats.pending}
-                </span>
-              )}
+              <Clock className="w-3.5 h-3.5" />
+              <span>Pending Review ({counts.pending})</span>
             </button>
 
             <button
               onClick={() => setActiveTab('APPROVED')}
-              className={`px-3 py-1.5 rounded transition-all flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded text-xs font-mono font-bold transition-all flex items-center gap-1.5 ${
                 activeTab === 'APPROVED'
-                  ? 'bg-white text-slate-900 font-bold shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-mint-400 text-navy-950 shadow-glow-mint'
+                  : 'bg-navy-850 text-slateText-secondary border border-navy-700 hover:text-white'
               }`}
             >
-              <span>Approved</span>
-              <span className="text-slate-400 text-[11px]">({stats.approved})</span>
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              <span>Authorized ({counts.approved})</span>
             </button>
 
             <button
               onClick={() => setActiveTab('REJECTED')}
-              className={`px-3 py-1.5 rounded transition-all flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded text-xs font-mono font-bold transition-all flex items-center gap-1.5 ${
                 activeTab === 'REJECTED'
-                  ? 'bg-white text-slate-900 font-bold shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-coral-400 text-white shadow-glow-coral'
+                  : 'bg-navy-850 text-slateText-secondary border border-navy-700 hover:text-white'
               }`}
             >
-              <span>Rejected</span>
-              <span className="text-slate-400 text-[11px]">({stats.rejected})</span>
+              <XCircle className="w-3.5 h-3.5" />
+              <span>Rejected ({counts.rejected})</span>
             </button>
 
             <button
               onClick={() => setActiveTab('ALL')}
-              className={`px-3 py-1.5 rounded transition-all ${
+              className={`px-3 py-1.5 rounded text-xs font-mono font-medium transition-all ${
                 activeTab === 'ALL'
-                  ? 'bg-white text-slate-900 font-bold shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-cyan-400 text-navy-950 font-bold shadow-glow-cyan'
+                  : 'bg-navy-850 text-slateText-secondary border border-navy-700 hover:text-white'
               }`}
             >
-              All Records
+              All Records ({counts.total})
             </button>
           </div>
 
-          {/* Quick Refresh */}
-          {onRefresh && (
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={onRefresh}
-              isLoading={isLoading}
-              leftIcon={<RefreshCw className="w-3.5 h-3.5" />}
-            >
-              Refresh
-            </Button>
-          )}
-        </div>
-
-        {/* Search */}
-        <div className="relative">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search approvals by tracking number, tool name, or reason..."
-            className="w-full pl-9 pr-3 py-1.5 text-xs border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 placeholder:text-slate-400 text-slate-800"
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery('')}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs"
-            >
-              Clear
-            </button>
-          )}
+          {/* Search box */}
+          <div className="relative w-full sm:w-72">
+            <Search className="w-4 h-4 text-cyan-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder="Search action or tracking #..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-3 py-1.5 text-xs bg-navy-950 border border-navy-700 rounded text-slateText-primary placeholder-slateText-muted focus:outline-none focus:border-cyan-400 font-mono"
+            />
+          </div>
         </div>
       </div>
 
-      {/* Approvals Cards Stream */}
+      {/* Approvals List */}
       <div className="space-y-3">
         {filteredApprovals.length === 0 ? (
-          <div className="p-12 text-center bg-white border border-slate-200 rounded-md">
-            <ShieldCheck className="w-8 h-8 text-slate-400 mx-auto" />
-            <h4 className="text-sm font-bold text-slate-800 mt-2">No approvals in this queue</h4>
-            <p className="text-xs text-slate-500 mt-1">
-              {activeTab === 'PENDING'
-                ? 'All autonomous remediation steps are currently authorized or none require gating.'
-                : 'No historical approval records matching the selected tab.'}
+          <div className="p-12 text-center bg-navy-900 border border-navy-700 rounded-md">
+            <ShieldCheck className="w-10 h-10 text-cyan-400 mx-auto mb-2 opacity-80" />
+            <h4 className="text-sm font-bold text-white font-mono">No Approvals Awaiting Action</h4>
+            <p className="text-xs text-slateText-secondary max-w-sm mx-auto mt-1">
+              All agent-proposed consequential actions have been authorized or reviewed.
             </p>
           </div>
         ) : (
-          filteredApprovals.map((item) => {
-            const isPending = item.decision === 'PENDING';
-            const isApproved = item.decision === 'APPROVED';
+          filteredApprovals.map((app) => {
+            const isPending = app.decision === 'PENDING';
+            const isCritical = app.risk_level === 'CRITICAL';
 
             return (
               <div
-                key={item.id}
-                className={`bg-white border rounded-md p-4 shadow-sm transition-all hover:shadow-md ${
-                  isPending
-                    ? 'border-amber-300 bg-amber-50/15'
-                    : isApproved
-                    ? 'border-slate-200'
-                    : 'border-slate-200 opacity-80'
+                key={app.id}
+                className={`bg-navy-850 border rounded-md p-4 transition-all shadow-sm ${
+                  isPending && isCritical
+                    ? 'border-coral-400/50 hover:border-coral-400 hover:shadow-glow-coral'
+                    : isPending
+                    ? 'border-amber-400/40 hover:border-amber-400'
+                    : 'border-navy-700 opacity-90'
                 }`}
               >
                 {/* Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100">
-                  <div className="flex items-center gap-2.5 flex-wrap">
-                    <div
-                      className={`w-8 h-8 rounded border flex items-center justify-center shrink-0 ${
-                        isPending
-                          ? 'bg-amber-100 text-amber-800 border-amber-200'
-                          : isApproved
-                          ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
-                          : 'bg-slate-100 text-slate-700 border-slate-200'
-                      }`}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-navy-700/60">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="p-1 rounded bg-navy-900 border border-navy-700 text-cyan-400 font-mono text-xs">
+                      {app.action_type}
+                    </span>
+                    <button
+                      onClick={() => onSelectShipment && onSelectShipment(app.tracking_number || '')}
+                      className="font-mono font-bold text-xs text-cyan-400 hover:underline flex items-center gap-1"
                     >
-                      {isPending ? (
-                        <ShieldAlert className="w-4 h-4" />
-                      ) : isApproved ? (
-                        <CheckCircle2 className="w-4 h-4" />
-                      ) : (
-                        <XCircle className="w-4 h-4" />
-                      )}
-                    </div>
-
-                    <div>
-                      <div className="flex items-center gap-2">
-                        {item.tracking_number && (
-                          <button
-                            onClick={() => onSelectShipment?.(item.tracking_number!)}
-                            className="font-mono font-bold text-xs text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1 bg-blue-50 px-2 py-0.5 rounded border border-blue-100"
-                            title="View shipment details"
-                          >
-                            <span>{item.tracking_number}</span>
-                            <ExternalLink className="w-3 h-3" />
-                          </button>
-                        )}
-                        <h4 className="text-xs font-bold text-slate-900 tracking-tight">
-                          {item.action_type?.replace(/_/g, ' ') || 'REMEDIATION ACTION'}
-                        </h4>
-                        <span className="text-[11px] font-mono bg-slate-100 text-slate-700 px-2 py-0.5 rounded border border-slate-200 font-medium">
-                          Tool: {item.tool_used || 'system'}
-                        </span>
-                      </div>
-
-                      {item.origin && item.destination && (
-                        <p className="text-[11px] text-slate-500 mt-0.5">
-                          Route: {item.origin} → {item.destination} ({item.mode}) | Carrier:{' '}
-                          {item.carrier_id || 'Carrier EDI'}
-                        </p>
-                      )}
-                    </div>
+                      {app.tracking_number}
+                      <ExternalLink className="w-3 h-3 text-slateText-muted" />
+                    </button>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-navy-900 text-slateText-secondary border border-navy-700">
+                      Tool: {app.tool_used}
+                    </span>
                   </div>
 
-                  <div className="flex items-center gap-1.5 self-start sm:self-center">
-                    <StatusBadge status={item.decision} size="sm" />
-                    <span className="text-[11px] text-slate-400 ml-1 font-mono">
-                      {formatTime(item.requested_at)}
-                    </span>
+                  <div className="flex items-center gap-2">
+                    <StatusBadge status={app.risk_level || 'HIGH'} size="sm" />
+                    <StatusBadge status={app.decision} size="sm" />
                   </div>
                 </div>
 
                 {/* Body Content */}
-                <div className="py-3 space-y-2.5 text-xs">
-                  {/* Action Parameters Table/Pills */}
-                  {item.input_data && Object.keys(item.input_data).length > 0 && (
-                    <div className="p-2.5 bg-slate-50 border border-slate-200 rounded space-y-1">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
-                        Proposed Remediation Parameters:
+                <div className="mt-3 space-y-2">
+                  <p className="text-xs font-semibold text-white">
+                    {app.reason}
+                  </p>
+
+                  {app.exception_description && (
+                    <div className="p-2.5 rounded bg-navy-900 border border-navy-700 text-xs text-slateText-secondary font-mono">
+                      <strong className="text-amber-400 mr-1.5">Underlying Bottleneck:</strong>
+                      {app.exception_description}
+                    </div>
+                  )}
+
+                  {/* Input Data payload */}
+                  {app.input_data && (
+                    <div className="text-[11px] font-mono text-slateText-muted">
+                      <span className="text-slateText-muted uppercase block text-[10px] mb-0.5">
+                        Proposed Execution Payload:
                       </span>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[11px] font-mono">
-                        {Object.entries(item.input_data).map(([k, v]) => (
-                          <div key={k} className="bg-white p-1.5 rounded border border-slate-200">
-                            <span className="text-slate-400 block text-[10px] uppercase">{k}</span>
-                            <span className="text-slate-800 font-bold">{String(v)}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Trigger Exception Info */}
-                  {item.exception_description && (
-                    <div className="text-xs text-slate-700">
-                      <span className="font-semibold text-slate-900">Trigger Exception:</span>{' '}
-                      {item.exception_description}
-                    </div>
-                  )}
-
-                  {/* Policy Gate Reason */}
-                  {item.reason && (
-                    <div
-                      className={`p-2.5 rounded text-xs leading-relaxed ${
-                        isPending
-                          ? 'bg-amber-50/70 border border-amber-200 text-amber-900'
-                          : isApproved
-                          ? 'bg-emerald-50/70 border border-emerald-200 text-emerald-900'
-                          : 'bg-slate-50 border border-slate-200 text-slate-700'
-                      }`}
-                    >
-                      <span className="font-semibold not-italic">
-                        {isPending ? 'Governance Policy Trigger:' : 'Authorized Rationale:'}
-                      </span>{' '}
-                      {item.reason}
-                    </div>
-                  )}
-
-                  {/* Review Audit Details (when already decided) */}
-                  {!isPending && item.reviewed_at && (
-                    <div className="flex items-center gap-3 text-[11px] text-slate-500 pt-1 font-mono">
-                      <span>Reviewed: {formatTime(item.reviewed_at)}</span>
-                      {item.reviewer_id && <span>Reviewer: {item.reviewer_id}</span>}
-                      <span>Action Status: {item.action_status || 'CLOSED'}</span>
+                      <pre className="p-2 rounded bg-navy-950 border border-navy-800 text-cyan-300 overflow-x-auto text-[10px]">
+                        {JSON.stringify(app.input_data, null, 2)}
+                      </pre>
                     </div>
                   )}
                 </div>
 
                 {/* Footer Controls */}
-                <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
-                  <div className="text-[11px] text-slate-400 font-mono">
-                    Approval UUID: {item.id.slice(0, 13)}...
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    {/* View Shipment */}
-                    {item.tracking_number && onSelectShipment && (
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => onSelectShipment(item.tracking_number!)}
-                        leftIcon={<Eye className="w-3.5 h-3.5" />}
-                      >
-                        Shipment
-                      </Button>
-                    )}
-
-                    {/* Copilot Reason */}
-                    {item.tracking_number && onAnalyzeShipment && (
-                      <Button
-                        variant="agent"
-                        size="sm"
-                        onClick={() => onAnalyzeShipment(item.tracking_number!)}
-                        leftIcon={<Bot className="w-3.5 h-3.5" />}
-                      >
-                        Copilot
-                      </Button>
-                    )}
-
-                    {/* If pending: One-Click Approve and Reject Buttons */}
-                    {isPending ? (
-                      <>
-                        <Button
-                          variant="danger"
-                          size="sm"
-                          onClick={() => handleOpenModal(item, 'REJECTED')}
-                          leftIcon={<X className="w-3.5 h-3.5" />}
-                        >
-                          Reject
-                        </Button>
-                        <Button
-                          variant="primary"
-                          size="sm"
-                          onClick={() => handleOpenModal(item, 'APPROVED')}
-                          leftIcon={<ShieldCheck className="w-3.5 h-3.5 text-white" />}
-                          className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                        >
-                          One-Click Approve
-                        </Button>
-                      </>
-                    ) : (
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => handleOpenModal(item, item.decision === 'APPROVED' ? 'APPROVED' : 'REJECTED')}
-                        leftIcon={<RotateCcw className="w-3.5 h-3.5" />}
-                      >
-                        Review Audit Record
-                      </Button>
+                <div className="mt-3.5 pt-2.5 border-t border-navy-700/60 flex flex-wrap items-center justify-between gap-2">
+                  <div className="text-[11px] font-mono text-slateText-muted">
+                    <span>Requested {formatTime(app.requested_at)}</span>
+                    {app.reviewed_at && (
+                      <span className="ml-2">
+                        • Reviewed {formatTime(app.reviewed_at)} by <span className="text-white">{app.reviewer_id}</span>
+                      </span>
                     )}
                   </div>
+
+                  {isPending ? (
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        leftIcon={<XCircle className="w-3.5 h-3.5" />}
+                        onClick={() => handleOpenDecision(app, 'REJECTED')}
+                      >
+                        Reject Action
+                      </Button>
+                      <Button
+                        variant="mint"
+                        size="sm"
+                        leftIcon={<CheckCircle2 className="w-3.5 h-3.5" />}
+                        onClick={() => handleOpenDecision(app, 'APPROVED')}
+                      >
+                        Authorize & Execute
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleOpenDecision(app, app.decision === 'APPROVED' ? 'APPROVED' : 'REJECTED')}
+                      leftIcon={<Eye className="w-3.5 h-3.5" />}
+                    >
+                      View Audit Details
+                    </Button>
+                  )}
                 </div>
               </div>
             );
@@ -439,16 +274,18 @@ export const ApprovalQueue: React.FC<ApprovalQueueProps> = ({
       </div>
 
       {/* Decision Modal */}
-      <ApprovalDecisionModal
-        isOpen={Boolean(activeModalApproval)}
-        onClose={() => setActiveModalApproval(null)}
-        approval={activeModalApproval}
-        initialDecision={modalInitialDecision}
-        onSuccess={(updated) => {
-          onUpdateApproval(updated);
-          setActiveModalApproval(null);
-        }}
-      />
+      {activeModalApproval && (
+        <ApprovalDecisionModal
+          isOpen={Boolean(activeModalApproval)}
+          onClose={() => setActiveModalApproval(null)}
+          approval={activeModalApproval}
+          initialDecision={modalInitialDecision}
+          onSuccess={(updated) => {
+            onUpdateApproval(updated);
+            if (onRefresh) onRefresh();
+          }}
+        />
+      )}
     </div>
   );
 };

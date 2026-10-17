@@ -11,7 +11,7 @@ export const Skeleton: React.FC<SkeletonProps> = ({ className = 'h-4 w-full', co
       {Array.from({ length: count }).map((_, idx) => (
         <div
           key={idx}
-          className={`animate-pulse bg-slate-200 rounded ${className}`}
+          className={`animate-pulse bg-navy-800/80 rounded ${className}`}
         />
       ))}
     </>

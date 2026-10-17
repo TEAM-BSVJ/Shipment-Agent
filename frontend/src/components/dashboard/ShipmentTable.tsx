@@ -1,7 +1,7 @@
 import React from 'react';
 import {
   ArrowRight,
-  Bot,
+  Sparkles,
   Calendar,
   ChevronRight,
   ExternalLink,
@@ -30,38 +30,22 @@ export const ShipmentTable: React.FC<ShipmentTableProps> = ({
   const getModeIcon = (mode: TransportMode) => {
     switch (mode) {
       case 'SEA':
-        return (
-          <span title="Sea Freight">
-            <Ship className="w-3.5 h-3.5 text-blue-600" />
-          </span>
-        );
+        return <Ship className="w-3.5 h-3.5 text-cyan-400" />;
       case 'AIR':
-        return (
-          <span title="Air Freight">
-            <Plane className="w-3.5 h-3.5 text-sky-600" />
-          </span>
-        );
+        return <Plane className="w-3.5 h-3.5 text-sky-400" />;
       case 'ROAD':
-        return (
-          <span title="Road Freight">
-            <Truck className="w-3.5 h-3.5 text-emerald-600" />
-          </span>
-        );
+        return <Truck className="w-3.5 h-3.5 text-mint-400" />;
       case 'RAIL':
-        return (
-          <span title="Rail Freight">
-            <Train className="w-3.5 h-3.5 text-amber-600" />
-          </span>
-        );
+        return <Train className="w-3.5 h-3.5 text-amber-400" />;
       default:
-        return <Truck className="w-3.5 h-3.5 text-slate-500" />;
+        return <Truck className="w-3.5 h-3.5 text-slateText-muted" />;
     }
   };
 
   if (isLoading) {
     return (
-      <div className="bg-white border border-slate-200 rounded-md shadow-sm overflow-hidden p-4 space-y-3">
-        <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+      <div className="bg-navy-900 border border-navy-700 rounded-md shadow-sm overflow-hidden p-4 space-y-3">
+        <div className="flex items-center justify-between pb-2 border-b border-navy-800">
           <Skeleton className="h-4 w-32" />
           <Skeleton className="h-4 w-20" />
         </div>
@@ -72,24 +56,24 @@ export const ShipmentTable: React.FC<ShipmentTableProps> = ({
 
   if (shipments.length === 0) {
     return (
-      <div className="bg-white border border-slate-200 rounded-md shadow-sm p-12 text-center">
-        <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto text-slate-400 mb-3">
-          <PackageOpen className="w-6 h-6" />
+      <div className="bg-navy-900 border border-navy-700 rounded-md shadow-sm p-12 text-center">
+        <div className="w-12 h-12 rounded-full bg-navy-850 border border-navy-700 flex items-center justify-center mx-auto text-slateText-muted mb-3">
+          <PackageOpen className="w-6 h-6 text-cyan-400" />
         </div>
-        <h4 className="text-sm font-bold text-slate-800">No shipments found</h4>
-        <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">
-          No shipments matched your search criteria or active filters. Try resetting the filters above.
+        <h4 className="text-sm font-bold text-slateText-primary">No freight records found</h4>
+        <p className="text-xs text-slateText-secondary max-w-sm mx-auto mt-1">
+          No active shipments matched your search criteria or active filters. Try clearing or adjusting the filters above.
         </p>
       </div>
     );
   }
 
   return (
-    <div className="bg-white border border-slate-200 rounded-md shadow-sm overflow-hidden">
+    <div className="bg-navy-900 border border-navy-700 rounded-md shadow-md overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse text-xs">
           <thead>
-            <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold uppercase tracking-wider text-[11px]">
+            <tr className="bg-navy-800/90 border-b border-navy-700 text-slateText-muted font-mono font-semibold uppercase tracking-wider text-[11px]">
               <th className="py-2.5 px-4">Tracking #</th>
               <th className="py-2.5 px-3">Mode</th>
               <th className="py-2.5 px-3">Origin → Destination</th>
@@ -99,42 +83,37 @@ export const ShipmentTable: React.FC<ShipmentTableProps> = ({
               <th className="py-2.5 px-4 text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-navy-700/60 font-sans">
             {shipments.map((shipment) => {
-              const riskColor =
-                shipment.risk_level === 'CRITICAL'
-                  ? 'bg-red-500'
-                  : shipment.risk_level === 'HIGH'
-                  ? 'bg-orange-500'
-                  : shipment.risk_level === 'MEDIUM'
-                  ? 'bg-amber-500'
-                  : 'bg-emerald-500';
+              const isCritical = shipment.risk_score >= 60;
+              const isWarning = shipment.risk_score >= 31 && shipment.risk_score < 60;
+              const riskBarColor = isCritical ? 'bg-coral-400' : isWarning ? 'bg-amber-400' : 'bg-mint-400';
 
               return (
                 <tr
                   key={shipment.id}
-                  className="hover:bg-slate-50/80 transition-colors group cursor-pointer"
+                  className="hover:bg-navy-850 transition-colors group cursor-pointer"
                   onClick={() => onSelectShipment(shipment)}
                 >
                   {/* Tracking Number */}
-                  <td className="py-2.5 px-4 font-mono font-bold text-blue-600 group-hover:underline flex items-center gap-1.5 whitespace-nowrap">
+                  <td className="py-2.5 px-4 font-mono font-bold text-cyan-400 group-hover:text-cyan-300 group-hover:underline flex items-center gap-1.5 whitespace-nowrap">
                     {shipment.tracking_number}
                     <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                   </td>
 
                   {/* Transport Mode */}
                   <td className="py-2.5 px-3 whitespace-nowrap">
-                    <div className="flex items-center gap-1.5 font-medium text-slate-700">
+                    <div className="flex items-center gap-1.5 font-medium text-slateText-primary font-mono">
                       {getModeIcon(shipment.mode)}
-                      <span className="capitalize text-[11px] font-sans">{shipment.mode.toLowerCase()}</span>
+                      <span className="capitalize text-[11px]">{shipment.mode}</span>
                     </div>
                   </td>
 
                   {/* Route */}
-                  <td className="py-2.5 px-3 text-slate-700">
+                  <td className="py-2.5 px-3 text-slateText-secondary font-mono">
                     <div className="flex items-center gap-1.5 font-medium truncate max-w-xs">
                       <span className="truncate">{shipment.origin}</span>
-                      <ArrowRight className="w-3 h-3 text-slate-400 shrink-0" />
+                      <ArrowRight className="w-3 h-3 text-cyan-400/60 shrink-0" />
                       <span className="truncate">{shipment.destination}</span>
                     </div>
                   </td>
@@ -149,21 +128,23 @@ export const ShipmentTable: React.FC<ShipmentTableProps> = ({
                     <div className="flex items-center gap-2">
                       <StatusBadge status={shipment.risk_level} size="sm" />
                       <div className="flex items-center gap-1 font-mono text-[11px]">
-                        <div className="w-12 h-1.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
+                        <div className="w-12 h-1.5 bg-navy-950 rounded-full overflow-hidden border border-navy-700">
                           <div
-                            className={`h-full ${riskColor}`}
+                            className={`h-full ${riskBarColor}`}
                             style={{ width: `${Math.max(5, shipment.risk_score)}%` }}
                           />
                         </div>
-                        <span className="text-slate-500 font-semibold">{shipment.risk_score}</span>
+                        <span className={`font-semibold tabular-nums ${isCritical ? 'text-coral-400' : 'text-slateText-secondary'}`}>
+                          {shipment.risk_score}
+                        </span>
                       </div>
                     </div>
                   </td>
 
                   {/* Promised Delivery Date */}
-                  <td className="py-2.5 px-3 text-slate-600 whitespace-nowrap">
+                  <td className="py-2.5 px-3 text-slateText-secondary whitespace-nowrap">
                     <div className="flex items-center gap-1.5 font-mono text-[11px]">
-                      <Calendar className="w-3 h-3 text-slate-400" />
+                      <Calendar className="w-3 h-3 text-slateText-muted" />
                       <span>{shipment.promised_delivery_date}</span>
                     </div>
                   </td>
@@ -174,7 +155,7 @@ export const ShipmentTable: React.FC<ShipmentTableProps> = ({
                       <Button
                         variant="agent"
                         size="sm"
-                        leftIcon={<Bot className="w-3.5 h-3.5" />}
+                        leftIcon={<Sparkles className="w-3 h-3" />}
                         onClick={() => onAnalyzeShipment(shipment)}
                         className="py-1 px-2 text-[11px]"
                       >
@@ -184,7 +165,7 @@ export const ShipmentTable: React.FC<ShipmentTableProps> = ({
                         variant="ghost"
                         size="sm"
                         onClick={() => onSelectShipment(shipment)}
-                        className="py-1 px-1.5 text-slate-400 hover:text-slate-700"
+                        className="py-1 px-1.5 text-slateText-muted hover:text-cyan-400"
                         title="View Details"
                       >
                         <ChevronRight className="w-4 h-4" />

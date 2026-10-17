@@ -1,3 +1,4 @@
-export * from './Navbar';
-export * from './Sidebar';
 export * from './AppLayout';
+export * from './TopTelemetryBar';
+export * from './NavRail';
+export * from './CommandPalette';

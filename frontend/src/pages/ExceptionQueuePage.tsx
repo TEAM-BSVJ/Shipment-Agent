@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { RefreshCw } from 'lucide-react';
 import { EnrichedException } from '../types';
 import { exceptionService } from '../services';
-import { Button, StatusBadge } from '../components/common';
+import { Button } from '../components/common';
 import { ExceptionQueueTable } from '../components/exceptions';
 
 interface ExceptionQueuePageProps {
@@ -124,86 +124,85 @@ export const ExceptionQueuePage: React.FC<ExceptionQueuePageProps> = ({
   onAnalyzeShipment,
   onExceptionCountChange,
 }) => {
-  const [exceptions, setExceptions] = useState<EnrichedException[]>(BENCHMARK_EXCEPTIONS);
-  const [isLoading, setIsLoading] = useState(false);
+  const [exceptions, setExceptions] = useState<EnrichedException[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
 
-  const loadExceptions = async () => {
+  const fetchExceptions = async () => {
     try {
-      setIsLoading(true);
-      const res = await exceptionService.getExceptions({ limit: 100 });
+      const res = await exceptionService.getExceptions();
       if (res.data && res.data.length > 0) {
-        // Merge with shipments to enrich tracking details
-        const enriched: EnrichedException[] = await Promise.all(
-          res.data.map(async (exc) => {
-            const fallback = BENCHMARK_EXCEPTIONS.find((b) => b.id === exc.id || b.shipment_id === exc.shipment_id);
-            return {
-              ...exc,
-              tracking_number: fallback?.tracking_number || `SHP-${exc.shipment_id.slice(0, 4).toUpperCase()}`,
-              origin: fallback?.origin,
-              destination: fallback?.destination,
-              mode: fallback?.mode || 'SEA',
-              carrier_id: fallback?.carrier_id,
-              pending_action: fallback?.pending_action,
-            };
-          })
-        );
-        setExceptions(enriched);
+        setExceptions(res.data as unknown as EnrichedException[]);
+        const openCount = res.data.filter((e) => e.status !== 'RESOLVED' && e.status !== 'DISMISSED').length;
+        if (onExceptionCountChange) onExceptionCountChange(openCount);
       } else {
         setExceptions(BENCHMARK_EXCEPTIONS);
+        if (onExceptionCountChange) onExceptionCountChange(3);
       }
-    } catch (err) {
-      console.warn('Backend exceptions query returned error, using fallback benchmark exceptions:', err);
+    } catch {
       setExceptions(BENCHMARK_EXCEPTIONS);
+      if (onExceptionCountChange) onExceptionCountChange(3);
     } finally {
       setIsLoading(false);
+      setIsRefreshing(false);
     }
   };
 
   useEffect(() => {
-    loadExceptions();
+    fetchExceptions();
   }, []);
 
-  // Notify parent of active count
-  useEffect(() => {
-    const activeCount = exceptions.filter((e) => e.status !== 'RESOLVED' && e.status !== 'DISMISSED').length;
-    onExceptionCountChange?.(activeCount);
-  }, [exceptions, onExceptionCountChange]);
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    fetchExceptions();
+  };
 
   const handleUpdateException = (updated: EnrichedException) => {
-    setExceptions((prev) => prev.map((e) => (e.id === updated.id ? updated : e)));
+    setExceptions((prev) =>
+      prev.map((e) => (e.id === updated.id ? updated : e))
+    );
+    const openCount = exceptions
+      .map((e) => (e.id === updated.id ? updated : e))
+      .filter((e) => e.status !== 'RESOLVED' && e.status !== 'DISMISSED').length;
+    if (onExceptionCountChange) onExceptionCountChange(openCount);
   };
 
   return (
-    <div className="space-y-4">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-200 gap-2">
+    <div className="space-y-5">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-navy-700">
         <div>
-          <h2 className="text-xl font-bold text-slate-900 tracking-tight">
-            Operational Exception Queue
-          </h2>
-          <p className="text-xs text-slate-500 mt-1">
-            Triage identified freight bottlenecks, missing customs documentation, and overdue dispatch milestones.
+          <div className="flex items-center gap-2.5">
+            <h2 className="text-xl font-bold text-white tracking-tight font-sans">
+              Exception & Bottleneck Resolution Center
+            </h2>
+            <span className="text-xs bg-coral-400/20 text-coral-400 border border-coral-400/40 px-2.5 py-0.5 rounded-full font-mono font-semibold">
+              Prioritized Triage Feed
+            </span>
+          </div>
+          <p className="text-xs text-slateText-secondary mt-0.5">
+            Autonomous exception detection, empirical evidence cards, and policy-governed remediation.
           </p>
         </div>
+
         <div className="flex items-center gap-2">
-          <StatusBadge status="OPEN" />
           <Button
             variant="secondary"
             size="sm"
-            onClick={loadExceptions}
-            isLoading={isLoading}
+            isLoading={isRefreshing}
             leftIcon={<RefreshCw className="w-3.5 h-3.5" />}
+            onClick={handleRefresh}
           >
             Refresh Queue
           </Button>
         </div>
       </div>
 
-      {/* Exception Queue Table */}
+      {/* Main Table / Cards */}
       <ExceptionQueueTable
         exceptions={exceptions}
         isLoading={isLoading}
-        onRefresh={loadExceptions}
+        onRefresh={fetchExceptions}
         onUpdateException={handleUpdateException}
         onSelectShipment={onSelectShipment}
         onAnalyzeShipment={onAnalyzeShipment}

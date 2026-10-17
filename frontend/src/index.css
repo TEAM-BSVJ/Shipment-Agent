@@ -3,27 +3,47 @@
 @tailwind utilities;
 
 @layer base {
-  body {
-    @apply bg-slate-50 text-slate-800 antialiased;
-    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  html, body {
+    @apply bg-navy-950 text-slateText-primary antialiased;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11", "tnum";
+    font-variant-numeric: tabular-nums;
+    color-scheme: dark;
   }
 }
 
-/* Custom scrollbars for high data-density operational tables and chat */
+/* Custom dark scrollbars for high data-density command panels */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: #080D18;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: #25364B;
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #334A66;
+}
+
+/* Monospaced tabular alignment utility */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Subtle route glow for SVG lines */
+.filter-route-cyan {
+  filter: drop-shadow(0 0 6px rgba(56, 217, 255, 0.6));
+}
+
+.filter-route-coral {
+  filter: drop-shadow(0 0 6px rgba(255, 93, 115, 0.7));
+}
+
+.filter-route-amber {
+  filter: drop-shadow(0 0 6px rgba(255, 181, 71, 0.6));
 }

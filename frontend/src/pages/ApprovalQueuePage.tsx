@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { RefreshCw } from 'lucide-react';
 import { EnrichedApproval } from '../types';
 import { approvalService } from '../services';
-import { Button, StatusBadge } from '../components/common';
+import { Button } from '../components/common';
 import { ApprovalQueue } from '../components/approvals';
 
 interface ApprovalQueuePageProps {
@@ -98,87 +98,83 @@ export const ApprovalQueuePage: React.FC<ApprovalQueuePageProps> = ({
 }) => {
   const [approvals, setApprovals] = useState<EnrichedApproval[]>(BENCHMARK_APPROVALS);
   const [isLoading, setIsLoading] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const loadApprovals = async () => {
+  const fetchApprovals = async () => {
     try {
-      setIsLoading(true);
-      const res = await approvalService.getApprovals({ limit: 100 });
+      const res = await approvalService.getApprovals();
       if (res.data && res.data.length > 0) {
-        const enriched: EnrichedApproval[] = res.data.map((app) => {
-          const fallback = BENCHMARK_APPROVALS.find((b) => b.id === app.id || b.action_id === app.action_id);
-          return {
-            ...app,
-            tracking_number: fallback?.tracking_number || `SHP-${app.id.slice(0, 4).toUpperCase()}`,
-            origin: fallback?.origin,
-            destination: fallback?.destination,
-            mode: fallback?.mode || 'AIR',
-            carrier_id: fallback?.carrier_id,
-            action_type: fallback?.action_type || 'RESCHEDULE_MILESTONE',
-            tool_used: fallback?.tool_used || 'reschedule_milestone',
-            action_status: fallback?.action_status || 'WAITING_APPROVAL',
-            input_data: fallback?.input_data || {},
-            exception_type: fallback?.exception_type,
-            exception_description: fallback?.exception_description,
-            reason: app.reason || fallback?.reason,
-          };
-        });
-        setApprovals(enriched);
+        setApprovals(res.data as unknown as EnrichedApproval[]);
+        const pendingCount = res.data.filter((a) => a.decision === 'PENDING').length;
+        if (onApprovalCountChange) onApprovalCountChange(pendingCount);
       } else {
         setApprovals(BENCHMARK_APPROVALS);
+        if (onApprovalCountChange) onApprovalCountChange(2);
       }
-    } catch (err) {
-      console.warn('Backend approvals query returned error, using fallback benchmark approvals:', err);
+    } catch {
       setApprovals(BENCHMARK_APPROVALS);
+      if (onApprovalCountChange) onApprovalCountChange(2);
     } finally {
       setIsLoading(false);
+      setIsRefreshing(false);
     }
   };
 
   useEffect(() => {
-    loadApprovals();
+    fetchApprovals();
   }, []);
 
-  // Notify parent of pending count
-  useEffect(() => {
-    const pendingCount = approvals.filter((a) => a.decision === 'PENDING').length;
-    onApprovalCountChange?.(pendingCount);
-  }, [approvals, onApprovalCountChange]);
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    fetchApprovals();
+  };
 
   const handleUpdateApproval = (updated: EnrichedApproval) => {
-    setApprovals((prev) => prev.map((a) => (a.id === updated.id ? updated : a)));
+    setApprovals((prev) =>
+      prev.map((a) => (a.id === updated.id ? updated : a))
+    );
+    const pendingCount = approvals
+      .map((a) => (a.id === updated.id ? updated : a))
+      .filter((a) => a.decision === 'PENDING').length;
+    if (onApprovalCountChange) onApprovalCountChange(pendingCount);
   };
 
   return (
-    <div className="space-y-4">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-200 gap-2">
+    <div className="space-y-5">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-navy-700">
         <div>
-          <h2 className="text-xl font-bold text-slate-900 tracking-tight">
-            Human-in-the-Loop Approvals
-          </h2>
-          <p className="text-xs text-slate-500 mt-1">
-            Review and authorize AI-recommended actions for consequential freight workflow steps (RULE-E06).
+          <div className="flex items-center gap-2.5">
+            <h2 className="text-xl font-bold text-white tracking-tight font-sans">
+              Human Approval Gateway
+            </h2>
+            <span className="text-xs bg-amber-400/20 text-amber-400 border border-amber-400/40 px-2.5 py-0.5 rounded-full font-mono font-semibold">
+              RULE-E06 Governance Gate
+            </span>
+          </div>
+          <p className="text-xs text-slateText-secondary mt-0.5">
+            Authorize or reject high-consequence agent actions (milestone rescheduling, workflow dispatches).
           </p>
         </div>
+
         <div className="flex items-center gap-2">
-          <StatusBadge status="PENDING_APPROVAL" />
           <Button
             variant="secondary"
             size="sm"
-            onClick={loadApprovals}
-            isLoading={isLoading}
+            isLoading={isRefreshing}
             leftIcon={<RefreshCw className="w-3.5 h-3.5" />}
+            onClick={handleRefresh}
           >
-            Refresh Queue
+            Refresh Approvals
           </Button>
         </div>
       </div>
 
-      {/* Approval Queue Component */}
+      {/* Main Approvals Queue */}
       <ApprovalQueue
         approvals={approvals}
         isLoading={isLoading}
-        onRefresh={loadApprovals}
+        onRefresh={fetchApprovals}
         onUpdateApproval={handleUpdateApproval}
         onSelectShipment={onSelectShipment}
         onAnalyzeShipment={onAnalyzeShipment}

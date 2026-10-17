@@ -1,178 +1,240 @@
+import { useState } from 'react';
 import {
-  Activity,
+  AlertTriangle,
   Bot,
-  Building2,
   CheckCircle2,
-  Clock,
+  History,
   Layers,
-  Radio,
-  Server,
+  Package,
+  Plus,
+  RefreshCw,
   ShieldAlert,
+  ShieldCheck,
 } from 'lucide-react';
+import { AppLayout, NavTab } from './components/layout';
+import { Button, MetricCard, StatusBadge } from './components/common';
 
 export default function App() {
+  const [activeTab, setActiveTab] = useState<NavTab>('dashboard');
+  const [isChatOpen, setIsChatOpen] = useState(false);
+
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
-      {/* Top Navbar */}
-      <header className="bg-white border-b border-slate-200 px-6 py-3.5 flex items-center justify-between sticky top-0 z-30 shadow-sm">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-md bg-blue-600 flex items-center justify-center text-white font-bold shadow-sm">
-            <Layers className="w-5 h-5" />
+    <AppLayout
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+      exceptionCount={3}
+      approvalCount={2}
+      onOpenChat={() => setIsChatOpen(true)}
+    >
+      {/* Header with Title and Quick Actions */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 gap-4 border-b border-slate-200">
+        <div>
+          <div className="flex items-center gap-2">
+            <h2 className="text-xl font-bold text-slate-900 capitalize">
+              {activeTab === 'dashboard'
+                ? 'Shipments Dashboard'
+                : activeTab === 'exceptions'
+                ? 'Operational Exception Queue'
+                : activeTab === 'approvals'
+                ? 'Human-in-the-Loop Approvals'
+                : 'Immutable Audit Trail'}
+            </h2>
+            <span className="text-xs bg-slate-100 text-slate-600 border border-slate-200 px-2 py-0.5 rounded-full font-mono">
+              Live Feed
+            </span>
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-base font-bold text-slate-900 tracking-tight">
-                Logistics Bottleneck Resolution Agent
-              </h1>
-              <span className="text-xs px-2 py-0.5 rounded-full font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                Live Control Tower
+          <p className="text-xs text-slate-500 mt-1">
+            {activeTab === 'dashboard'
+              ? 'Real-time multi-modal freight monitoring, risk calculation, and milestone timelines.'
+              : activeTab === 'exceptions'
+              ? 'Triage identified logistics bottlenecks, missing paperwork, and overdue dispatch exceptions.'
+              : activeTab === 'approvals'
+              ? 'Review and authorize AI-recommended actions for consequential workflow steps (RULE-E06).'
+              : 'Chronological compliance log of autonomous agent inferences, tool executions, and user decisions.'}
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Button
+            variant="secondary"
+            size="sm"
+            leftIcon={<RefreshCw className="w-3.5 h-3.5" />}
+            onClick={() => {}}
+          >
+            Refresh
+          </Button>
+
+          {activeTab === 'dashboard' && (
+            <Button
+              variant="primary"
+              size="sm"
+              leftIcon={<Plus className="w-4 h-4" />}
+              onClick={() => {}}
+            >
+              New Shipment
+            </Button>
+          )}
+
+          <Button
+            variant="agent"
+            size="sm"
+            leftIcon={<Bot className="w-4 h-4" />}
+            onClick={() => setIsChatOpen(true)}
+          >
+            Ask Copilot
+          </Button>
+        </div>
+      </div>
+
+      {/* KPI Overview Metrics Row */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 my-6">
+        <MetricCard
+          title="Active Shipments"
+          value="5"
+          icon={<Package className="w-4 h-4 text-blue-600" />}
+          subtext="Across 4 transport modes"
+          alertVariant="neutral"
+          onClick={() => setActiveTab('dashboard')}
+        />
+        <MetricCard
+          title="Critical Bottlenecks"
+          value="2"
+          icon={<ShieldAlert className="w-4 h-4 text-red-600" />}
+          subtext="Requires operator attention"
+          alertVariant="danger"
+          onClick={() => setActiveTab('exceptions')}
+        />
+        <MetricCard
+          title="Pending Approvals"
+          value="2"
+          icon={<ShieldCheck className="w-4 h-4 text-amber-600" />}
+          subtext="Gated consequential actions"
+          alertVariant="warning"
+          onClick={() => setActiveTab('approvals')}
+        />
+        <MetricCard
+          title="Healthy Operating"
+          value="3"
+          icon={<CheckCircle2 className="w-4 h-4 text-emerald-600" />}
+          subtext="Milestones on schedule"
+          alertVariant="success"
+          onClick={() => setActiveTab('dashboard')}
+        />
+      </div>
+
+      {/* Main Tab Content Viewport */}
+      <div className="bg-white border border-slate-200 rounded-md p-6 shadow-sm">
+        {activeTab === 'dashboard' && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <Layers className="w-4 h-4 text-blue-600" />
+                Active Benchmark Freight Scenarios (SHP-101 to SHP-105)
+              </h3>
+              <span className="text-xs text-slate-400 font-mono">
+                Ready for Unit 6.4 Table & Timeline View
               </span>
             </div>
-            <p className="text-xs text-slate-500">
-              Autonomous Exception Monitoring, Diagnosis & Human-Gated Remediation
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="p-4 border border-slate-200 rounded-md bg-slate-50 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-mono font-bold text-slate-900 text-sm">SHP-101</span>
+                  <StatusBadge status="HIGH" size="sm" />
+                </div>
+                <p className="text-xs text-slate-600 font-medium">Mumbai, IN → Rotterdam, NL (Sea Freight)</p>
+                <div className="flex items-center gap-2 pt-2 border-t border-slate-200 text-xs">
+                  <StatusBadge status="CUSTOMS_HOLD" size="sm" />
+                  <span className="text-slate-500">Missing Commercial Invoice</span>
+                </div>
+              </div>
+
+              <div className="p-4 border border-slate-200 rounded-md bg-slate-50 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-mono font-bold text-slate-900 text-sm">SHP-102</span>
+                  <StatusBadge status="CRITICAL" size="sm" />
+                </div>
+                <p className="text-xs text-slate-600 font-medium">Dallas, US → Austin, US (Air Freight)</p>
+                <div className="flex items-center gap-2 pt-2 border-t border-slate-200 text-xs">
+                  <StatusBadge status="AT_WAREHOUSE" size="sm" />
+                  <span className="text-slate-500">Overdue Warehouse Dispatch (+4.5h)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'exceptions' && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-red-600" />
+                Open Exception Triage Queue
+              </h3>
+              <StatusBadge status="OPEN" size="sm" />
+            </div>
+            <p className="text-xs text-slate-600">
+              Exceptions identified by background monitoring and document reconciliation pipelines.
             </p>
           </div>
-        </div>
+        )}
 
-        {/* Global System & Model Status Badges */}
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-slate-100 border border-slate-200 text-xs font-medium text-slate-700">
-            <Bot className="w-4 h-4 text-violet-600" />
-            <span>AI Model:</span>
-            <span className="font-mono text-slate-900 font-semibold">gemma4 31B-it (Evolus)</span>
+        {activeTab === 'approvals' && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-amber-600" />
+                Pending Human Approval Gates (RULE-E06)
+              </h3>
+              <StatusBadge status="PENDING_APPROVAL" size="sm" />
+            </div>
+            <p className="text-xs text-slate-600">
+              Consequential autonomous actions paused until authorized by a human operator.
+            </p>
           </div>
+        )}
 
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-slate-100 border border-slate-200 text-xs font-medium text-slate-700">
-            <Radio className="w-4 h-4 text-emerald-600" />
-            <span>FastAPI:</span>
-            <span className="font-mono text-emerald-700 font-semibold">:8000/api/v1</span>
+        {activeTab === 'audit' && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <History className="w-4 h-4 text-slate-600" />
+                Chronological Compliance Trail
+              </h3>
+              <span className="text-xs text-slate-500 font-mono">PostgreSQL Immutable Log</span>
+            </div>
+            <p className="text-xs text-slate-600">
+              Full provenance of automated checks, Gemma 4 diagnoses, tool executions, and approvals.
+            </p>
           </div>
+        )}
+      </div>
 
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-slate-100 border border-slate-200 text-xs font-medium text-slate-700">
-            <Building2 className="w-4 h-4 text-blue-600" />
-            <span>Tenant:</span>
-            <span className="font-mono text-slate-900 font-semibold">DEFAULT_TENANT</span>
+      {/* Mock Chat Slide-over Drawer Indicator */}
+      {isChatOpen && (
+        <div className="fixed inset-y-0 right-0 w-96 bg-white border-l border-slate-200 shadow-2xl z-40 flex flex-col">
+          <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+            <div className="flex items-center gap-2">
+              <Bot className="w-4 h-4 text-violet-600" />
+              <h4 className="text-sm font-bold text-slate-900">Gemma 4 Copilot</h4>
+            </div>
+            <button
+              onClick={() => setIsChatOpen(false)}
+              className="text-xs text-slate-500 hover:text-slate-800 font-medium px-2 py-1 rounded hover:bg-slate-200"
+            >
+              Close
+            </button>
           </div>
-        </div>
-      </header>
-
-      {/* Main Workspace Frame */}
-      <main className="flex-1 p-6 max-w-7xl w-full mx-auto space-y-6">
-        {/* Status Callout Banner */}
-        <div className="bg-white border border-slate-200 rounded-md p-6 shadow-sm">
-          <div className="flex items-start justify-between">
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-blue-600 bg-blue-50 px-2.5 py-1 rounded">
-                  Milestone 6 / Unit 6.1 Verified
-                </span>
-                <span className="text-xs text-slate-400 font-mono">
-                  React 18 + Vite + TypeScript + Tailwind CSS
-                </span>
-              </div>
-              <h2 className="text-xl font-bold text-slate-900">
-                Frontend Control Tower Scaffolding Initialized
-              </h2>
-              <p className="text-sm text-slate-600 mt-1 max-w-3xl">
-                The frontend development environment is active and configured according to{' '}
-                <span className="font-mono font-medium text-slate-800">Design.md</span>. API proxy routing is
-                mapped to <span className="font-mono font-medium text-slate-800">http://localhost:8000/api/v1</span>.
+          <div className="flex-1 p-4 text-xs text-slate-600 space-y-3 overflow-y-auto">
+            <div className="p-3 bg-violet-50 border border-violet-100 rounded-md">
+              <p className="font-semibold text-violet-900">Operational Assistant</p>
+              <p className="text-violet-700 mt-1">
+                I am connected to the Evolus AI Platform running Google Gemma 4 31B Instruct. Ask any operational freight question or trigger shipment diagnostics.
               </p>
             </div>
-            <div className="text-right">
-              <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-md">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                Vite Toolchain Ready
-              </span>
-            </div>
-          </div>
-
-          {/* Quick Metrics Readiness Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6 pt-6 border-t border-slate-100">
-            <div className="bg-slate-50 border border-slate-200 rounded-md p-4">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-slate-500">Benchmark Freight Scenarios</span>
-                <Server className="w-4 h-4 text-slate-400" />
-              </div>
-              <p className="text-2xl font-bold text-slate-900 font-mono mt-1">5</p>
-              <p className="text-xs text-slate-500 mt-1">SHP-101 through SHP-105</p>
-            </div>
-
-            <div className="bg-slate-50 border border-slate-200 rounded-md p-4">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-slate-500">Evolus AI Credit Balance</span>
-                <Bot className="w-4 h-4 text-violet-500" />
-              </div>
-              <p className="text-2xl font-bold text-violet-700 font-mono mt-1">50,000</p>
-              <p className="text-xs text-slate-500 mt-1">Allocated for Hackathon</p>
-            </div>
-
-            <div className="bg-slate-50 border border-slate-200 rounded-md p-4">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-slate-500">Allowlisted Agent Tools</span>
-                <Activity className="w-4 h-4 text-blue-500" />
-              </div>
-              <p className="text-2xl font-bold text-slate-900 font-mono mt-1">6</p>
-              <p className="text-xs text-slate-500 mt-1">Max 5 Recursions (RULE-E03)</p>
-            </div>
-
-            <div className="bg-slate-50 border border-slate-200 rounded-md p-4">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-slate-500">Human Approval Gating</span>
-                <ShieldAlert className="w-4 h-4 text-amber-500" />
-              </div>
-              <p className="text-2xl font-bold text-amber-600 font-mono mt-1">ACTIVE</p>
-              <p className="text-xs text-slate-500 mt-1">Consequential Tools Gated (RULE-E06)</p>
-            </div>
           </div>
         </div>
-
-        {/* Next Implementation Roadmap Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-white border border-slate-200 rounded-md p-5 shadow-sm">
-            <h3 className="text-sm font-semibold text-slate-900 flex items-center gap-2 mb-3">
-              <Layers className="w-4 h-4 text-blue-600" />
-              Immediate Next Step: Unit 6.2 (Contracts & API Services)
-            </h3>
-            <ul className="space-y-2 text-xs text-slate-600">
-              <li className="flex items-start gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1.5" />
-                <span>
-                  Synchronize TypeScript interfaces in <code className="font-mono bg-slate-100 px-1 py-0.5 rounded">frontend/src/types/index.ts</code> directly with backend Pydantic models in <code className="font-mono bg-slate-100 px-1 py-0.5 rounded">backend/app/schemas/domain.py</code>.
-                </span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1.5" />
-                <span>
-                  Implement typed HTTP API client modules in <code className="font-mono bg-slate-100 px-1 py-0.5 rounded">frontend/src/services/</code> for Shipments, Exceptions, Approvals, and Copilot Chat.
-                </span>
-              </li>
-            </ul>
-          </div>
-
-          <div className="bg-white border border-slate-200 rounded-md p-5 shadow-sm">
-            <h3 className="text-sm font-semibold text-slate-900 flex items-center gap-2 mb-3">
-              <Clock className="w-4 h-4 text-slate-600" />
-              Following Step: Unit 6.3 (Dashboard, Timeline & Chat)
-            </h3>
-            <ul className="space-y-2 text-xs text-slate-600">
-              <li className="flex items-start gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-slate-400 mt-1.5" />
-                <span>
-                  Build interactive shipment table with risk level badges (<code className="font-mono text-red-600">CRITICAL</code>, <code className="font-mono text-amber-600">HIGH</code>, <code className="font-mono text-emerald-600">LOW</code>).
-                </span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-slate-400 mt-1.5" />
-                <span>
-                  Build interactive milestone timeline, human approval modal, and Gemma 4 Copilot slide-over chat drawer.
-                </span>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </main>
-    </div>
+      )}
+    </AppLayout>
   );
 }

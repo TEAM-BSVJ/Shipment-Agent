@@ -1,8 +1,5 @@
 import { useState } from 'react';
-import {
-  Bot,
-  X,
-} from 'lucide-react';
+import { X } from 'lucide-react';
 import { AppLayout, NavTab } from './components/layout';
 import { StatusBadge } from './components/common';
 import { Dashboard } from './pages/Dashboard';
@@ -10,6 +7,7 @@ import { ShipmentDetail } from './pages/ShipmentDetail';
 import { ExceptionQueuePage } from './pages/ExceptionQueuePage';
 import { ApprovalQueuePage } from './pages/ApprovalQueuePage';
 import { AuditTrailPage } from './pages/AuditTrailPage';
+import { ChatDrawer } from './components/chat';
 import { Shipment } from './types';
 import { shipmentService } from './services';
 
@@ -175,36 +173,19 @@ export default function App() {
         </div>
       )}
 
-      {/* Copilot Chat Slide-over Drawer */}
-      {isChatOpen && (
-        <div className="fixed inset-y-0 right-0 w-96 bg-white border-l border-slate-200 shadow-2xl z-40 flex flex-col">
-          <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-            <div className="flex items-center gap-2">
-              <Bot className="w-4 h-4 text-violet-600" />
-              <h4 className="text-sm font-bold text-slate-900">Gemma 4 Copilot</h4>
-            </div>
-            <button
-              onClick={() => setIsChatOpen(false)}
-              className="text-xs text-slate-500 hover:text-slate-800 font-medium px-2 py-1 rounded hover:bg-slate-200"
-            >
-              Close
-            </button>
-          </div>
-          <div className="flex-1 p-4 text-xs text-slate-600 space-y-3 overflow-y-auto">
-            {selectedShipment && (
-              <div className="p-2.5 bg-blue-50 border border-blue-100 rounded text-blue-900 text-xs">
-                <span className="font-semibold">Context Active:</span> {selectedShipment.tracking_number} ({selectedShipment.origin} → {selectedShipment.destination})
-              </div>
-            )}
-            <div className="p-3 bg-violet-50 border border-violet-100 rounded-md">
-              <p className="font-semibold text-violet-900">Evolus AI Reasoning Loop</p>
-              <p className="text-violet-700 mt-1">
-                Connected to <span className="font-mono font-medium">gemma4 31B-it</span>. Ask questions about shipment delays, document weight discrepancies, or overdue milestones.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Interactive Copilot Chat Slide-over Drawer */}
+      <ChatDrawer
+        isOpen={isChatOpen}
+        onClose={() => setIsChatOpen(false)}
+        selectedShipment={selectedShipment}
+        onClearShipmentContext={() => setSelectedShipment(null)}
+        onNavigateTab={(tab) => {
+          setActiveTab(tab);
+          if (tab !== 'dashboard') {
+            setSelectedShipment(null);
+          }
+        }}
+      />
     </AppLayout>
   );
 }

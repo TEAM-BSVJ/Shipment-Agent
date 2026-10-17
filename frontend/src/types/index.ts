@@ -267,6 +267,8 @@ export interface ChatMessage {
   role: 'user' | 'assistant' | 'system';
   content: string;
   timestamp?: string;
+  grounded_facts?: string[];
+  recommended_action?: string | null;
 }
 
 export interface AgentChatRequest {

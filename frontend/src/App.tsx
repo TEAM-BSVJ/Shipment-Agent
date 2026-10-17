@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import {
   Bot,
-  History,
   X,
 } from 'lucide-react';
 import { AppLayout, NavTab } from './components/layout';
@@ -10,6 +9,7 @@ import { Dashboard } from './pages/Dashboard';
 import { ShipmentDetail } from './pages/ShipmentDetail';
 import { ExceptionQueuePage } from './pages/ExceptionQueuePage';
 import { ApprovalQueuePage } from './pages/ApprovalQueuePage';
+import { AuditTrailPage } from './pages/AuditTrailPage';
 import { Shipment } from './types';
 import { shipmentService } from './services';
 
@@ -145,33 +145,7 @@ export default function App() {
         />
       )}
 
-      {activeTab === 'audit' && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between pb-4 border-b border-slate-200">
-            <div>
-              <h2 className="text-xl font-bold text-slate-900 tracking-tight">
-                Immutable Compliance Audit Trail
-              </h2>
-              <p className="text-xs text-slate-500 mt-1">
-                Chronological log of autonomous agent inferences, tool executions, and user authorizations.
-              </p>
-            </div>
-            <span className="text-xs font-mono bg-slate-100 text-slate-600 border border-slate-200 px-2 py-0.5 rounded">
-              PostgreSQL Audit Log
-            </span>
-          </div>
-
-          <div className="bg-white border border-slate-200 rounded-md p-6 shadow-sm">
-            <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
-              <History className="w-4 h-4 text-slate-600" />
-              <h3 className="text-sm font-bold text-slate-900">Compliance Log Stream</h3>
-            </div>
-            <p className="text-xs text-slate-600 mt-3">
-              Ready for Unit 6.7 Chronological Audit Log Table.
-            </p>
-          </div>
-        </div>
-      )}
+      {activeTab === 'audit' && <AuditTrailPage />}
 
       {/* Selected Shipment Quick Peek Banner (shown when navigating away from dashboard) */}
       {selectedShipment && activeTab !== 'dashboard' && (

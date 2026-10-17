@@ -36,8 +36,10 @@ export const exceptionService = {
     update: {
       status?: ExceptionStatus;
       root_cause?: string;
+      risk_level?: string;
+      resolved_by?: string;
     }
   ): Promise<ShipmentException> {
-    return api.put<ShipmentException>(`/exceptions/${id}`, update);
+    return api.patch<ShipmentException>(`/exceptions/${id}`, update);
   },
 };

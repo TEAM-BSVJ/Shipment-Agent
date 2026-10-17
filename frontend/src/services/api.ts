@@ -128,4 +128,12 @@ export const api = {
     });
     return res.data;
   },
+
+  async patch<T>(endpoint: string, body?: unknown): Promise<T> {
+    const res = await request<T>(endpoint, {
+      method: 'PATCH',
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    return res.data;
+  },
 };

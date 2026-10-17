@@ -318,3 +318,34 @@ export interface AuditFilters {
   skip?: number;
   limit?: number;
 }
+
+export interface EnrichedException extends ShipmentException {
+  tracking_number?: string;
+  origin?: string;
+  destination?: string;
+  mode?: TransportMode;
+  carrier_id?: string;
+  business_priority?: BusinessPriority;
+  pending_action?: {
+    id: string;
+    action_type: ActionType;
+    tool_used: ToolName;
+    status: ActionStatus;
+  } | null;
+}
+
+export interface EnrichedApproval extends ApprovalRequest {
+  tracking_number?: string;
+  origin?: string;
+  destination?: string;
+  mode?: TransportMode;
+  carrier_id?: string;
+  business_priority?: BusinessPriority;
+  action_type?: ActionType;
+  tool_used?: ToolName;
+  action_status?: ActionStatus;
+  input_data?: Record<string, unknown>;
+  exception_type?: ExceptionType;
+  risk_level?: RiskLevel;
+  exception_description?: string;
+}

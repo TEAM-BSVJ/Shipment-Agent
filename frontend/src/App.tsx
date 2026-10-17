@@ -1,21 +1,32 @@
 import { useState } from 'react';
 import {
-  AlertTriangle,
   Bot,
   History,
-  ShieldCheck,
   X,
 } from 'lucide-react';
 import { AppLayout, NavTab } from './components/layout';
 import { StatusBadge } from './components/common';
 import { Dashboard } from './pages/Dashboard';
 import { ShipmentDetail } from './pages/ShipmentDetail';
+import { ExceptionQueuePage } from './pages/ExceptionQueuePage';
+import { ApprovalQueuePage } from './pages/ApprovalQueuePage';
 import { Shipment } from './types';
+import { shipmentService } from './services';
+
+const TRACKING_TO_ID: Record<string, string> = {
+  'SHP-101': '10100000-0000-0000-0000-000000000101',
+  'SHP-102': '10200000-0000-0000-0000-000000000102',
+  'SHP-103': '10300000-0000-0000-0000-000000000103',
+  'SHP-104': '10400000-0000-0000-0000-000000000104',
+  'SHP-105': '10500000-0000-0000-0000-000000000105',
+};
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<NavTab>('dashboard');
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [selectedShipment, setSelectedShipment] = useState<Shipment | null>(null);
+  const [exceptionCount, setExceptionCount] = useState<number>(3);
+  const [approvalCount, setApprovalCount] = useState<number>(2);
 
   const handleSelectShipment = (shipment: Shipment) => {
     setSelectedShipment(shipment);
@@ -26,6 +37,69 @@ export default function App() {
     setIsChatOpen(true);
   };
 
+  const handleSelectByTrackingNumber = async (trackingNumber: string) => {
+    try {
+      const res = await shipmentService.getShipments({ search: trackingNumber });
+      if (res.data && res.data.length > 0) {
+        setSelectedShipment(res.data[0]);
+        setActiveTab('dashboard');
+        return;
+      }
+    } catch {
+      // Use fallback mapping below
+    }
+
+    const fallbackId = TRACKING_TO_ID[trackingNumber] || '10100000-0000-0000-0000-000000000101';
+    setSelectedShipment({
+      id: fallbackId,
+      tracking_number: trackingNumber,
+      origin:
+        trackingNumber === 'SHP-102'
+          ? 'Dallas, US'
+          : trackingNumber === 'SHP-103'
+          ? 'Shanghai, CN'
+          : trackingNumber === 'SHP-105'
+          ? 'Frankfurt, DE'
+          : 'Mumbai, IN',
+      destination:
+        trackingNumber === 'SHP-102'
+          ? 'Austin, US'
+          : trackingNumber === 'SHP-103'
+          ? 'Los Angeles, US'
+          : trackingNumber === 'SHP-105'
+          ? 'Chicago, US'
+          : 'Rotterdam, NL',
+      mode: trackingNumber === 'SHP-102' || trackingNumber === 'SHP-105' ? 'AIR' : 'SEA',
+      carrier_id:
+        trackingNumber === 'SHP-102'
+          ? 'FEDEX_EXPRESS'
+          : trackingNumber === 'SHP-103'
+          ? 'COSCO_SHIPPING'
+          : trackingNumber === 'SHP-105'
+          ? 'LUFTHANSA_CARGO'
+          : 'MAERSK_01',
+      promised_delivery_date: '2026-11-05',
+      business_priority: 'HIGH',
+      status:
+        trackingNumber === 'SHP-102'
+          ? 'AT_WAREHOUSE'
+          : trackingNumber === 'SHP-103'
+          ? 'EXCEPTION'
+          : 'CUSTOMS_HOLD',
+      risk_score: 75,
+      risk_level: 'HIGH',
+      tenant_id: 'a0000000-0000-0000-0000-000000000001',
+      milestones: [],
+      documents: [],
+    });
+    setActiveTab('dashboard');
+  };
+
+  const handleAnalyzeByTrackingNumber = async (trackingNumber: string) => {
+    await handleSelectByTrackingNumber(trackingNumber);
+    setIsChatOpen(true);
+  };
+
   return (
     <AppLayout
       activeTab={activeTab}
@@ -33,8 +107,8 @@ export default function App() {
         setActiveTab(tab);
         setSelectedShipment(null);
       }}
-      exceptionCount={3}
-      approvalCount={2}
+      exceptionCount={exceptionCount}
+      approvalCount={approvalCount}
       onOpenChat={() => setIsChatOpen(true)}
     >
       {/* Active Tab View */}
@@ -56,55 +130,19 @@ export default function App() {
         ))}
 
       {activeTab === 'exceptions' && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between pb-4 border-b border-slate-200">
-            <div>
-              <h2 className="text-xl font-bold text-slate-900 tracking-tight">
-                Operational Exception Queue
-              </h2>
-              <p className="text-xs text-slate-500 mt-1">
-                Triage identified logistics bottlenecks, missing paperwork, and overdue dispatch exceptions.
-              </p>
-            </div>
-            <StatusBadge status="OPEN" />
-          </div>
-
-          <div className="bg-white border border-slate-200 rounded-md p-6 shadow-sm">
-            <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
-              <AlertTriangle className="w-4 h-4 text-red-600" />
-              <h3 className="text-sm font-bold text-slate-900">Active Freight Exceptions</h3>
-            </div>
-            <p className="text-xs text-slate-600 mt-3">
-              Ready for Unit 6.6 Exception Queue & Human Approval Gate Modal.
-            </p>
-          </div>
-        </div>
+        <ExceptionQueuePage
+          onSelectShipment={handleSelectByTrackingNumber}
+          onAnalyzeShipment={handleAnalyzeByTrackingNumber}
+          onExceptionCountChange={setExceptionCount}
+        />
       )}
 
       {activeTab === 'approvals' && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between pb-4 border-b border-slate-200">
-            <div>
-              <h2 className="text-xl font-bold text-slate-900 tracking-tight">
-                Human-in-the-Loop Approvals
-              </h2>
-              <p className="text-xs text-slate-500 mt-1">
-                Review and authorize AI-recommended actions for consequential workflow steps (RULE-E06).
-              </p>
-            </div>
-            <StatusBadge status="PENDING_APPROVAL" />
-          </div>
-
-          <div className="bg-white border border-slate-200 rounded-md p-6 shadow-sm">
-            <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
-              <ShieldCheck className="w-4 h-4 text-amber-600" />
-              <h3 className="text-sm font-bold text-slate-900">Pending Decision Gate</h3>
-            </div>
-            <p className="text-xs text-slate-600 mt-3">
-              Ready for Unit 6.6 One-Click Approval & Rejection Modal.
-            </p>
-          </div>
-        </div>
+        <ApprovalQueuePage
+          onSelectShipment={handleSelectByTrackingNumber}
+          onAnalyzeShipment={handleAnalyzeByTrackingNumber}
+          onApprovalCountChange={setApprovalCount}
+        />
       )}
 
       {activeTab === 'audit' && (

@@ -1,0 +1,9 @@
+"""
+backend/app/api/v1/__init__.py
+
+API version 1 routers package.
+"""
+
+from backend.app.api.v1.router import api_v1_router
+
+__all__ = ["api_v1_router"]

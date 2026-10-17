@@ -32,3 +32,11 @@ AGENTS.md
 .tmp
 directives
 execution
+data/
+HANDOVER.md
+GEMINI.md
+photos/
+agents.json
+workflows.json
+api-1.json
+Design.v2.md

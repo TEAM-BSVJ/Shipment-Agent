@@ -1,0 +1,138 @@
+"""
+backend/app/schemas/enums.py
+
+Enumeration types defining domain constants across logistics operations,
+exception handling, and AI agent workflows.
+"""
+
+from enum import Enum
+
+
+class TransportMode(str, Enum):
+    SEA = "SEA"
+    AIR = "AIR"
+    ROAD = "ROAD"
+    RAIL = "RAIL"
+
+
+class BusinessPriority(str, Enum):
+    LOW = "LOW"
+    MEDIUM = "MEDIUM"
+    HIGH = "HIGH"
+    CRITICAL = "CRITICAL"
+
+
+class ShipmentStatus(str, Enum):
+    BOOKED = "BOOKED"
+    PICKED_UP = "PICKED_UP"
+    IN_TRANSIT = "IN_TRANSIT"
+    AT_WAREHOUSE = "AT_WAREHOUSE"
+    CUSTOMS_HOLD = "CUSTOMS_HOLD"
+    OUT_FOR_DELIVERY = "OUT_FOR_DELIVERY"
+    DELIVERED = "DELIVERED"
+    EXCEPTION = "EXCEPTION"
+    CANCELLED = "CANCELLED"
+
+
+class MilestoneName(str, Enum):
+    BOOKING_CONFIRMED = "BOOKING_CONFIRMED"
+    PICKUP_SCHEDULED = "PICKUP_SCHEDULED"
+    PICKUP_COMPLETED = "PICKUP_COMPLETED"
+    WAREHOUSE_RECEIPT = "WAREHOUSE_RECEIPT"
+    WAREHOUSE_DISPATCH = "WAREHOUSE_DISPATCH"
+    PORT_ARRIVAL = "PORT_ARRIVAL"
+    CUSTOMS_CLEARANCE = "CUSTOMS_CLEARANCE"
+    VESSEL_DEPARTURE = "VESSEL_DEPARTURE"
+    DESTINATION_ARRIVAL = "DESTINATION_ARRIVAL"
+    OUT_FOR_DELIVERY = "OUT_FOR_DELIVERY"
+    DELIVERED = "DELIVERED"
+
+
+class DocumentType(str, Enum):
+    COMMERCIAL_INVOICE = "COMMERCIAL_INVOICE"
+    PACKING_LIST = "PACKING_LIST"
+    BILL_OF_LADING = "BILL_OF_LADING"
+    AIR_WAYBILL = "AIR_WAYBILL"
+    CERTIFICATE_OF_ORIGIN = "CERTIFICATE_OF_ORIGIN"
+    CUSTOMS_DECLARATION = "CUSTOMS_DECLARATION"
+    OTHER = "OTHER"
+
+
+class DocumentValidationStatus(str, Enum):
+    PENDING = "PENDING"
+    VALIDATED = "VALIDATED"
+    FLAGGED = "FLAGGED"
+    REJECTED = "REJECTED"
+
+
+class ExceptionType(str, Enum):
+    MISSING_DOCUMENT = "MISSING_DOCUMENT"
+    WEIGHT_MISMATCH = "WEIGHT_MISMATCH"
+    CONSIGNEE_MISMATCH = "CONSIGNEE_MISMATCH"
+    MILESTONE_OVERDUE = "MILESTONE_OVERDUE"
+    CUSTOMS_REJECTION = "CUSTOMS_REJECTION"
+    CARRIER_DELAY = "CARRIER_DELAY"
+    ADDRESS_ISSUE = "ADDRESS_ISSUE"
+    COMMUNICATION_BREAKDOWN = "COMMUNICATION_BREAKDOWN"
+
+
+class RiskLevel(str, Enum):
+    LOW = "LOW"
+    MEDIUM = "MEDIUM"
+    HIGH = "HIGH"
+    CRITICAL = "CRITICAL"
+
+
+class ExceptionStatus(str, Enum):
+    OPEN = "OPEN"
+    INVESTIGATING = "INVESTIGATING"
+    IN_PROGRESS = "IN_PROGRESS"
+    PENDING_APPROVAL = "PENDING_APPROVAL"
+    RESOLVED = "RESOLVED"
+    DISMISSED = "DISMISSED"
+
+
+class ActionType(str, Enum):
+    REQUEST_DOCUMENT = "REQUEST_DOCUMENT"
+    RESCHEDULE_MILESTONE = "RESCHEDULE_MILESTONE"
+    SEND_NOTIFICATION = "SEND_NOTIFICATION"
+    TRIGGER_AUTOMATION = "TRIGGER_AUTOMATION"
+    ESCALATE_TO_HUMAN = "ESCALATE_TO_HUMAN"
+
+
+class ActionStatus(str, Enum):
+    PENDING = "PENDING"
+    WAITING_APPROVAL = "WAITING_APPROVAL"
+    EXECUTING = "EXECUTING"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+    REJECTED = "REJECTED"
+
+
+class ApprovalDecision(str, Enum):
+    PENDING = "PENDING"
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"
+
+
+class NotificationChannel(str, Enum):
+    EMAIL = "EMAIL"
+    SMS = "SMS"
+    WHATSAPP = "WHATSAPP"
+    WEBHOOK = "WEBHOOK"
+
+
+class NotificationStatus(str, Enum):
+    QUEUED = "QUEUED"
+    SENT = "SENT"
+    FAILED = "FAILED"
+    DELIVERED = "DELIVERED"
+
+
+class ToolName(str, Enum):
+    GET_SHIPMENT = "get_shipment"
+    CREATE_CORRECTION_TASK = "create_correction_task"
+    TRIGGER_WORKFLOW = "trigger_workflow"
+    SEND_NOTIFICATION = "send_notification"
+    RESCHEDULE_MILESTONE = "reschedule_milestone"
+    ESCALATE_TO_HUMAN = "escalate_to_human"

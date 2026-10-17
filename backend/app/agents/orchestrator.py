@@ -27,6 +27,7 @@ from backend.app.agents.prompts import (
     format_copilot_prompt,
     format_shipment_context,
 )
+from backend.app.config import settings
 from backend.app.integrations.evolus_client import EvolusClient
 from backend.app.models.entities import (
     Approval,
@@ -263,6 +264,7 @@ class AgentOrchestrator:
         shipment_id: uuid.UUID,
         context_notes: Optional[str] = None,
         tenant_id: Optional[uuid.UUID] = None,
+        agent_id: Optional[str] = None,
     ) -> AgentAnalysisResponse:
         """
         Executes end-to-end diagnostic and remediation sequence:
@@ -282,9 +284,24 @@ class AgentOrchestrator:
         # 2. Build injection-safe prompt (RULE-F02)
         prompt_text = format_shipment_context(shipment_data, context_notes=context_notes)
 
+        # Resolve specialized Evolus agent if not explicitly specified
+        target_agent = agent_id
+        if not target_agent and context_notes:
+            notes_lower = context_notes.lower()
+            if "custom" in notes_lower or "ocr" in notes_lower or "invoice" in notes_lower:
+                target_agent = settings.EVOLUS_AGENT_CUSTOMS_ID
+            elif "carrier" in notes_lower or "vessel" in notes_lower or "flight" in notes_lower or "truck" in notes_lower:
+                target_agent = settings.EVOLUS_AGENT_CARRIER_ID
+            elif "copilot" in notes_lower:
+                target_agent = settings.EVOLUS_AGENT_COPILOT_ID
+            else:
+                target_agent = settings.EVOLUS_AGENT_BOTTLENECK_ID
+        elif not target_agent:
+            target_agent = settings.EVOLUS_AGENT_BOTTLENECK_ID
+
         # 3. Model inference & structured output validation
         try:
-            diagnosis = await self.evolus_client.run_gemma_diagnosis(prompt_text)
+            diagnosis = await self.evolus_client.run_gemma_diagnosis(prompt_text, agent_id=target_agent)
         except Exception as exc:
             logger.error("Inference failure for shipment %s: %s", shipment_id, exc, exc_info=True)
             # Degraded mode fallback per Architecture Section 14
@@ -471,43 +488,59 @@ class AgentOrchestrator:
 
         # Operational copilot inference
         lower_msg = message.lower()
-        if shipment_data:
-            tr = shipment_data.get("tracking_number", "UNKNOWN")
-            st = shipment_data.get("status", "UNKNOWN")
-            excs = shipment_data.get("exceptions", [])
+        response_text: Optional[str] = None
 
-            if "why" in lower_msg or "delay" in lower_msg or "status" in lower_msg or "problem" in lower_msg:
-                if excs:
-                    exc_info = "; ".join([f"{e.get('exception_type')}: {e.get('description')}" for e in excs])
-                    response_text = (
-                        f"Shipment {tr} is currently in {st} status due to active exceptions: {exc_info}. "
-                        "The system has logged root-cause evidence and recommended remediation actions."
-                    )
-                    recommended_action = "Review open exceptions and approve pending corrective actions in the Approvals queue."
+        if self.evolus_client.is_configured and settings.EVOLUS_AGENT_COPILOT_ID and not self.evolus_client.mock_mode:
+            try:
+                copilot_out = await self.evolus_client.ask_agent(
+                    agent_id=settings.EVOLUS_AGENT_COPILOT_ID,
+                    question=prompt,
+                )
+                if copilot_out and "answer" in copilot_out:
+                    ans = str(copilot_out["answer"]).strip()
+                    if ans:
+                        response_text = ans
+            except Exception as e:
+                logger.warning("Evolus copilot query fallback to deterministic template: %s", e)
+
+        if not response_text:
+            if shipment_data:
+                tr = shipment_data.get("tracking_number", "UNKNOWN")
+                st = shipment_data.get("status", "UNKNOWN")
+                excs = shipment_data.get("exceptions", [])
+
+                if "why" in lower_msg or "delay" in lower_msg or "status" in lower_msg or "problem" in lower_msg:
+                    if excs:
+                        exc_info = "; ".join([f"{e.get('exception_type')}: {e.get('description')}" for e in excs])
+                        response_text = (
+                            f"Shipment {tr} is currently in {st} status due to active exceptions: {exc_info}. "
+                            "The system has logged root-cause evidence and recommended remediation actions."
+                        )
+                        recommended_action = "Review open exceptions and approve pending corrective actions in the Approvals queue."
+                    else:
+                        response_text = f"Shipment {tr} is on schedule in {st} status with no unresolved operational exceptions."
+                        recommended_action = "Continue standard transit monitoring."
+
+                elif "document" in lower_msg or "invoice" in lower_msg or "packing" in lower_msg:
+                    docs = shipment_data.get("documents", [])
+                    doc_summary = ", ".join([f"{d.get('document_type')} ({d.get('validation_status')})" for d in docs]) if docs else "None"
+                    response_text = f"Shipment {tr} documents: {doc_summary}."
+                    recommended_action = "Upload missing or flagged documents via the Document Management panel."
+
                 else:
-                    response_text = f"Shipment {tr} is on schedule in {st} status with no unresolved operational exceptions."
-                    recommended_action = "Continue standard transit monitoring."
-
-            elif "document" in lower_msg or "invoice" in lower_msg or "packing" in lower_msg:
-                docs = shipment_data.get("documents", [])
-                doc_summary = ", ".join([f"{d.get('document_type')} ({d.get('validation_status')})" for d in docs]) if docs else "None"
-                response_text = f"Shipment {tr} documents: {doc_summary}."
-                recommended_action = "Upload missing or flagged documents via the Document Management panel."
+                    response_text = (
+                        f"Operational report for shipment {tr} ({shipment_data.get('origin')} to {shipment_data.get('destination')}): "
+                        f"Status is {st} with risk score {shipment_data.get('risk_score')}/100. "
+                        f"{len(excs)} active exception(s) recorded."
+                    )
+                    recommended_action = "Inspect shipment details and milestone timeline."
 
             else:
                 response_text = (
-                    f"Operational report for shipment {tr} ({shipment_data.get('origin')} to {shipment_data.get('destination')}): "
-                    f"Status is {st} with risk score {shipment_data.get('risk_score')}/100. "
-                    f"{len(excs)} active exception(s) recorded."
+                    "Logistics Copilot active. I can analyze shipment delays, explain milestone slippage, "
+                    "verify document consistency, and review pending approval gates. "
+                    "Please provide a shipment ID or ask a general operations question."
                 )
-                recommended_action = "Inspect shipment details and milestone timeline."
-
-        else:
-            response_text = (
-                "Logistics Copilot active. I can analyze shipment delays, explain milestone slippage, "
-                "verify document consistency, and review pending approval gates. "
-                "Please provide a shipment ID or ask a general operations question."
-            )
 
         return AgentChatResponse(
             response=response_text,

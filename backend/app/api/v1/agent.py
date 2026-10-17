@@ -54,6 +54,7 @@ async def analyze_shipment(
         response = await orchestrator.analyze_shipment(
             shipment_id=request.shipment_id,
             context_notes=request.context_notes,
+            agent_id=request.agent_id,
         )
         return response
     except ShipmentNotFoundError as exc:

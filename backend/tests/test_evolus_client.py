@@ -305,3 +305,83 @@ async def test_resume_automation_step_mock_and_live():
         res_live = await live_client.resume_automation_step("run-99", "step-88", {"approved": True})
         assert res_live["status"] == "RESUMED"
 
+
+@pytest.mark.asyncio
+async def test_ask_agent_mock_and_live():
+    """Verify ask_agent executes correctly in both mock and HTTP transport mode."""
+    # Mock mode
+    mock_client = EvolusClient(config=EvolusConfig(mock_mode=True))
+    res_mock = await mock_client.ask_agent("agent-123", "Hello agent")
+    assert "Mock response" in res_mock["answer"]
+    assert "conversationId" in res_mock
+
+    # HTTP mode
+    async def agent_handler(request: httpx.Request):
+        assert request.url.path == "/api/v1/agents/agent-456/ask"
+        assert request.headers["X-ApiKey"] == "evo_test_key"
+        assert request.headers["X-Application-Id"] == "evo_app_123"
+        payload = json.loads(request.content)
+        assert payload["content"] == "Check gross weight"
+        return httpx.Response(200, json={
+            "answer": "Gross weight matches.",
+            "title": "Check Gross Weight",
+            "citations": [],
+            "conversationId": "conv-789",
+        })
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(agent_handler)) as http_client:
+        live_client = EvolusClient(
+            config=EvolusConfig(api_key="evo_test_key", application_id="evo_app_123", mock_mode=False),
+            http_client=http_client,
+        )
+        res_live = await live_client.ask_agent("agent-456", "Check gross weight")
+        assert res_live["answer"] == "Gross weight matches."
+        assert res_live["conversationId"] == "conv-789"
+
+
+@pytest.mark.asyncio
+async def test_execute_and_get_workflow():
+    """Verify execute_workflow and get_workflow_execution in mock and HTTP transport mode."""
+    # Mock mode
+    mock_client = EvolusClient(config=EvolusConfig(mock_mode=True))
+    exec_res = await mock_client.execute_workflow("wf-1", input_text="Start")
+    assert exec_res["status"] == "QUEUED"
+    assert "executionId" in exec_res
+
+    status_res = await mock_client.get_workflow_execution("wf-1", exec_res["executionId"])
+    assert status_res["status"] == "Completed"
+
+    # HTTP mode
+    async def workflow_handler(request: httpx.Request):
+        if request.method == "POST":
+            assert request.url.path == "/api/v1/workflows/wf-999/execute"
+            return httpx.Response(202, json={
+                "jobId": "4262473",
+                "executionId": "exec-abc-123",
+                "enqueuedAt": "2026-10-17T12:00:00Z",
+                "traceId": "trace-999",
+            })
+        elif request.method == "GET":
+            assert request.url.path == "/api/v1/workflows/wf-999/executions/exec-abc-123"
+            return httpx.Response(200, json={
+                "id": "exec-abc-123",
+                "workflowId": "wf-999",
+                "status": "Completed",
+                "output": "Reconciliation passed",
+                "stepOutputs": {"1": "passed"},
+            })
+        return httpx.Response(404)
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(workflow_handler)) as http_client:
+        live_client = EvolusClient(
+            config=EvolusConfig(api_key="k", application_id="a", mock_mode=False),
+            http_client=http_client,
+        )
+        post_res = await live_client.execute_workflow("wf-999", input_text="Execute doc check")
+        assert post_res["executionId"] == "exec-abc-123"
+
+        get_res = await live_client.get_workflow_execution("wf-999", post_res["executionId"])
+        assert get_res["status"] == "Completed"
+        assert get_res["output"] == "Reconciliation passed"
+
+

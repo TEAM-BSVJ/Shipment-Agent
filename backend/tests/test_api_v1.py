@@ -348,7 +348,7 @@ async def test_patch_exception_status():
         payload = {
             "status": "RESOLVED",
             "root_cause": "Supplier provided invoice via email",
-            "resolved_by": str(uuid.uuid4()),
+            "resolved_by": "ops-lead@logistics-agent.io",
         }
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
             resp = await ac.patch(f"/api/v1/exceptions/{exc.id}", json=payload)
@@ -357,7 +357,9 @@ async def test_patch_exception_status():
         data = resp.json()
         assert data["status"] == ExceptionStatus.RESOLVED.value
         assert data["root_cause"] == "Supplier provided invoice via email"
+        assert data["resolved_by"] == "ops-lead@logistics-agent.io"
         assert exc.resolved_at is not None
+        assert exc.resolved_by == "ops-lead@logistics-agent.io"
         assert mock_db.commit.called
     finally:
         app.dependency_overrides.clear()

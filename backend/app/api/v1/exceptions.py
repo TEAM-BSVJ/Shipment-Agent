@@ -126,10 +126,14 @@ async def update_exception(
     if update_in.status:
         status_val = update_in.status.value if hasattr(update_in.status, "value") else str(update_in.status)
         exc.status = status_val
-        if status_val == ExceptionStatus.RESOLVED.value:
-            exc.resolved_at = datetime.now(timezone.utc)
-            if update_in.resolved_by:
-                exc.resolved_by = update_in.resolved_by
+        if status_val in [ExceptionStatus.RESOLVED.value, ExceptionStatus.DISMISSED.value]:
+            if not exc.resolved_at:
+                exc.resolved_at = datetime.now(timezone.utc)
+        else:
+            exc.resolved_at = None
+
+    if update_in.resolved_by is not None:
+        exc.resolved_by = update_in.resolved_by
 
     if update_in.risk_level:
         risk_val = update_in.risk_level.value if hasattr(update_in.risk_level, "value") else str(update_in.risk_level)

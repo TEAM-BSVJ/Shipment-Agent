@@ -35,13 +35,24 @@ class EvolusConfig(BaseModel):
     """Runtime configuration for Evolus AI platform interaction."""
     model_config = ConfigDict(extra="ignore")
 
-    base_url: str = "https://app.evolus.ai"
+    base_url: str = "https://api.evolus.ai"
     api_key: str = ""
     application_id: str = ""
-    model: str = "gemma4 31B-it"
+    model: str = "own/qwen3.8-27b"
     timeout_seconds: float = 30.0
     max_retries: int = 2
     mock_mode: bool = False
+
+    # Specialized Agent GUIDs
+    agent_bottleneck_id: Optional[str] = None
+    agent_customs_id: Optional[str] = None
+    agent_copilot_id: Optional[str] = None
+    agent_carrier_id: Optional[str] = None
+
+    # Workflow GUIDs
+    workflow_missing_doc_id: Optional[str] = None
+    workflow_doc_reconciliation_id: Optional[str] = None
+    workflow_dispatch_delay_id: Optional[str] = None
 
     @classmethod
     def from_settings(cls, settings: Optional[Settings] = None, mock_mode: Optional[bool] = None) -> "EvolusConfig":
@@ -58,6 +69,13 @@ class EvolusConfig(BaseModel):
             timeout_seconds=cfg.EVOLUS_TIMEOUT_SECONDS,
             max_retries=cfg.EVOLUS_MAX_RETRIES,
             mock_mode=is_mock,
+            agent_bottleneck_id=cfg.EVOLUS_AGENT_BOTTLENECK_ID,
+            agent_customs_id=cfg.EVOLUS_AGENT_CUSTOMS_ID,
+            agent_copilot_id=cfg.EVOLUS_AGENT_COPILOT_ID,
+            agent_carrier_id=cfg.EVOLUS_AGENT_CARRIER_ID,
+            workflow_missing_doc_id=cfg.EVOLUS_WORKFLOW_MISSING_DOC_ID,
+            workflow_doc_reconciliation_id=cfg.EVOLUS_WORKFLOW_DOC_RECONCILIATION_ID,
+            workflow_dispatch_delay_id=cfg.EVOLUS_WORKFLOW_DISPATCH_DELAY_ID,
         )
 
 
@@ -164,6 +182,16 @@ class EvolusClient:
             "Accept": "application/json",
         }
 
+    @property
+    def is_configured(self) -> bool:
+        """Returns True if Evolus credentials are present."""
+        return bool(self.config.api_key and self.config.application_id)
+
+    @property
+    def mock_mode(self) -> bool:
+        """Returns True if running in mock/offline mode."""
+        return self.config.mock_mode
+
     async def _get_client(self) -> httpx.AsyncClient:
         if self._custom_client is not None:
             return self._custom_client
@@ -242,9 +270,123 @@ class EvolusClient:
             confidence=0.85,
         )
 
-    async def run_gemma_diagnosis(self, prompt_context: str) -> AgentDiagnosticOutput:
+    async def ask_agent(
+        self,
+        agent_id: str,
+        content: str,
+        conversation_id: Optional[str] = None,
+        file_id: Optional[str] = None,
+    ) -> Dict[str, Any]:
         """
-        Sends structured prompt context to Evolus AI running gemma4 31B-it.
+        Sends a question/prompt to a specialized Evolus agent by GUID via POST /api/v1/agents/{agentId}/ask.
+        Returns the MemoryResponse dict containing answer, title, citations, and conversationId.
+        """
+        if self.config.mock_mode:
+            logger.info("EvolusClient mock mode: asking agent %s", agent_id)
+            return {
+                "answer": f"Mock response from agent {agent_id} for prompt: {content[:80]}...",
+                "title": "Mock Analysis",
+                "citations": [],
+                "conversationId": conversation_id or str(uuid.uuid4()),
+                "fromGPT": False,
+                "totalTokenCount": 50,
+            }
+
+        url = f"{self.config.base_url.rstrip('/')}/api/v1/agents/{agent_id}/ask"
+        payload = {
+            "content": content,
+            "conversationId": conversation_id,
+            "fileId": file_id,
+        }
+
+        client = await self._get_client()
+        should_close = self._custom_client is None
+        try:
+            response = await client.post(url, headers=self.headers, json=payload)
+            response.raise_for_status()
+            return response.json()
+        finally:
+            if should_close:
+                await client.aclose()
+
+    async def execute_workflow(
+        self,
+        workflow_id: str,
+        input_text: Optional[str] = None,
+        parameters: Optional[Dict[str, Any]] = None,
+        sync: bool = False,
+        input_parameters: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """
+        Queues execution of an Evolus Workflow via POST /api/v1/workflows/{workflowId}/execute.
+        Returns { jobId, executionId, execution_id, enqueuedAt, traceId }.
+        """
+        if self.config.mock_mode:
+            logger.info("EvolusClient mock mode: executing workflow %s", workflow_id)
+            exec_id = str(uuid.uuid4())
+            return {
+                "jobId": "mock_job_123",
+                "executionId": exec_id,
+                "execution_id": exec_id,
+                "enqueuedAt": "2026-10-17T12:00:00Z",
+                "traceId": "mock_trace_123",
+                "status": "QUEUED",
+                "mock": True,
+            }
+
+        sync_param = "?sync=true" if sync else ""
+        url = f"{self.config.base_url.rstrip('/')}/api/v1/workflows/{workflow_id}/execute{sync_param}"
+        payload: Dict[str, Any] = {}
+        if input_text:
+            payload["input"] = input_text
+        merged_params = parameters or input_parameters
+        if merged_params:
+            payload["parameters"] = merged_params
+
+        client = await self._get_client()
+        should_close = self._custom_client is None
+        try:
+            response = await client.post(url, headers=self.headers, json=payload)
+            response.raise_for_status()
+            return response.json()
+        finally:
+            if should_close:
+                await client.aclose()
+
+    async def get_workflow_execution(
+        self,
+        workflow_id: str,
+        execution_id: str,
+    ) -> Dict[str, Any]:
+        """
+        Fetches the execution details, status, outputs, and errors of a workflow run.
+        """
+        if self.config.mock_mode:
+            logger.info("EvolusClient mock mode: fetching workflow execution %s", execution_id)
+            return {
+                "id": execution_id,
+                "workflowId": workflow_id,
+                "status": "Completed",
+                "output": "Execution completed successfully.",
+                "stepOutputs": {},
+                "error": None,
+                "mock": True,
+            }
+
+        url = f"{self.config.base_url.rstrip('/')}/api/v1/workflows/{workflow_id}/executions/{execution_id}"
+        client = await self._get_client()
+        should_close = self._custom_client is None
+        try:
+            response = await client.get(url, headers=self.headers)
+            response.raise_for_status()
+            return response.json()
+        finally:
+            if should_close:
+                await client.aclose()
+
+    async def run_gemma_diagnosis(self, prompt_context: str, agent_id: Optional[str] = None) -> AgentDiagnosticOutput:
+        """
+        Sends structured prompt context to Evolus AI running Qwen3.8-27B / Gemma 4.
         Validates response strictly against AgentDiagnosticOutput schema.
         Falls back cleanly to deterministic mock mode if configured or on error.
         """
@@ -252,18 +394,24 @@ class EvolusClient:
             logger.info("EvolusClient executing in mock mode (model: %s)", self.config.model)
             return self._generate_mock_diagnosis(prompt_context)
 
-        payload = {
-            "model": self.config.model,
-            "messages": [
-                {"role": "system", "content": self.SYSTEM_INSTRUCTION},
-                {"role": "user", "content": prompt_context},
-            ],
-            "temperature": 0.1,
-            "max_tokens": 1536,
-            "response_format": {"type": "json_object"},
-        }
+        # Support both direct agent endpoint and chat completions fallback
+        target_agent_id = agent_id or self.config.agent_bottleneck_id
+        if target_agent_id:
+            url = f"{self.config.base_url.rstrip('/')}/api/v1/agents/{target_agent_id}/ask"
+            payload: Dict[str, Any] = {"content": f"{self.SYSTEM_INSTRUCTION}\n\n{prompt_context}"}
+        else:
+            url = f"{self.config.base_url.rstrip('/')}/api/v1/chat/completions"
+            payload = {
+                "model": self.config.model,
+                "messages": [
+                    {"role": "system", "content": self.SYSTEM_INSTRUCTION},
+                    {"role": "user", "content": prompt_context},
+                ],
+                "temperature": 0.1,
+                "max_tokens": 1536,
+                "response_format": {"type": "json_object"},
+            }
 
-        url = f"{self.config.base_url.rstrip('/')}/api/v1/chat/completions"
         last_exception = None
 
         client = await self._get_client()
@@ -277,7 +425,14 @@ class EvolusClient:
                     response.raise_for_status()
                     data = response.json()
 
-                    raw_content = data["choices"][0]["message"]["content"]
+                    if "choices" in data:
+                        raw_content = data["choices"][0]["message"]["content"]
+                    elif "answer" in data:
+                        raw_content = data["answer"]
+                    elif "output" in data:
+                        raw_content = data["output"]
+                    else:
+                        raw_content = str(data)
                     
                     # Clean markdown codeblocks if model inadvertently wrapped json
                     cleaned = re.sub(r"^```(?:json)?\s*", "", raw_content.strip())

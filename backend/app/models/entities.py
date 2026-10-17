@@ -192,7 +192,7 @@ class ShipmentException(Base, UUIDPrimaryKeyMixin):
     root_cause: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     detected_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
     resolved_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
-    resolved_by: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), nullable=True)
+    resolved_by: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
 
     shipment: Mapped["Shipment"] = relationship("Shipment", back_populates="exceptions")
     corrective_actions: Mapped[List["CorrectiveAction"]] = relationship(

@@ -21,7 +21,9 @@ from backend.app.schemas import (
     DocumentType,
     ExceptionCreate,
     ExceptionResponse,
+    ExceptionStatus,
     ExceptionType,
+    ExceptionUpdate,
     MilestoneCreate,
     MilestoneName,
     MilestoneResponse,
@@ -138,6 +140,29 @@ def test_exception_schemas():
     res = ExceptionResponse.model_validate(exc.model_dump())
     assert res.status.value == "OPEN"
     assert res.risk_level == RiskLevel.HIGH
+
+
+def test_exception_update_schema_with_string_operator():
+    """Verify ExceptionUpdate and ExceptionResponse accept string/email resolved_by."""
+    shipment_id = uuid4()
+    update = ExceptionUpdate(
+        status=ExceptionStatus.RESOLVED,
+        root_cause="Resolved by operator inspection",
+        resolved_by="ops-lead@logistics-agent.io",
+    )
+    assert update.status == ExceptionStatus.RESOLVED
+    assert update.resolved_by == "ops-lead@logistics-agent.io"
+
+    resp = ExceptionResponse(
+        id=shipment_id,
+        shipment_id=shipment_id,
+        exception_type=ExceptionType.WEIGHT_MISMATCH,
+        risk_level=RiskLevel.HIGH,
+        status=ExceptionStatus.RESOLVED,
+        description="Weight issue resolved",
+        resolved_by="ops-lead@logistics-agent.io",
+    )
+    assert resp.resolved_by == "ops-lead@logistics-agent.io"
 
 
 def test_agent_diagnostic_output_parsing():

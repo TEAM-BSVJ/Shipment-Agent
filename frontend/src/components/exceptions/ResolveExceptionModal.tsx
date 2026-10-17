@@ -48,21 +48,21 @@ export const ResolveExceptionModal: React.FC<ResolveExceptionModalProps> = ({
       setIsSubmitting(true);
       setErrorMsg(null);
 
-      try {
-        await exceptionService.updateException(exception.id, {
-          status: selectedStatus,
-          root_cause: resolutionNotes.trim(),
-          resolved_by: resolvedBy.trim(),
-        });
-      } catch (err) {
-        console.warn('Backend exception update returned error, applying client-side state update:', err);
-      }
+      const res = await exceptionService.updateException(exception.id, {
+        status: selectedStatus,
+        root_cause: resolutionNotes.trim(),
+        resolved_by: resolvedBy.trim(),
+      });
 
       const updated: EnrichedException = {
         ...exception,
+        ...res,
         status: selectedStatus,
         root_cause: resolutionNotes.trim(),
-        resolved_at: selectedStatus === 'RESOLVED' ? new Date().toISOString() : exception.resolved_at,
+        resolved_at:
+          selectedStatus === 'RESOLVED' || selectedStatus === 'DISMISSED'
+            ? res.resolved_at || new Date().toISOString()
+            : null,
         resolved_by: resolvedBy.trim(),
       };
 

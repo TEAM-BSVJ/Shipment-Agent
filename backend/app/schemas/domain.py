@@ -179,7 +179,7 @@ class ExceptionUpdate(DomainBaseModel):
     status: Optional[ExceptionStatus] = None
     risk_level: Optional[RiskLevel] = None
     root_cause: Optional[str] = None
-    resolved_by: Optional[UUID] = None
+    resolved_by: Optional[str] = None
 
 
 class ExceptionResponse(DomainBaseModel):
@@ -193,7 +193,7 @@ class ExceptionResponse(DomainBaseModel):
     root_cause: Optional[str] = None
     detected_at: Optional[datetime] = Field(default_factory=datetime.utcnow)
     resolved_at: Optional[datetime] = None
-    resolved_by: Optional[UUID] = None
+    resolved_by: Optional[str] = None
 
 
 # ---------------------------------------------------------------------------
@@ -305,6 +305,7 @@ class AgentAnalysisRequest(DomainBaseModel):
     shipment_id: UUID
     force_refresh: bool = False
     context_notes: Optional[str] = None
+    agent_id: Optional[str] = None
 
 
 class AgentAnalysisResponse(DomainBaseModel):

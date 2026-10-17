@@ -539,3 +539,46 @@ async def test_api_agent_tools_endpoint():
         assert "send_notification" in tool_names
         assert "reschedule_milestone" in tool_names
         assert "escalate_to_human" in tool_names
+
+
+@pytest.mark.asyncio
+async def test_orchestrator_specialized_agent_routing():
+    """Verify orchestrator dynamically routes to specialized Evolus agents."""
+    shipment = build_mock_shipment(scenario="customs")
+    mock_db = AsyncMock()
+    mock_result = MagicMock()
+    mock_result.scalar_one_or_none.return_value = shipment
+    mock_db.execute.return_value = mock_result
+    mock_db.add = MagicMock()
+    mock_db.commit = AsyncMock()
+
+    mock_client = AsyncMock()
+    mock_client.run_gemma_diagnosis.return_value = AgentDiagnosticOutput(
+        issue_type="CUSTOMS_HOLD",
+        root_cause="Commercial invoice weight discrepancy",
+        evidence=["Weight mismatch > 0.5kg"],
+        recommended_action="Escalate to customs broker",
+        tool_name=ToolName.ESCALATE_TO_HUMAN,
+        tool_input={"shipment_id": str(shipment.id), "reason": "Weight discrepancy"},
+        risk_level=RiskLevel.HIGH,
+        confidence=0.96,
+    )
+
+    orch = AgentOrchestrator(db=mock_db, evolus_client=mock_client)
+
+    # 1. Test context_notes routing to customs agent
+    res1 = await orch.analyze_shipment(shipment.id, context_notes="Customs OCR inspection flag")
+    assert res1.diagnosis.issue_type == "CUSTOMS_HOLD"
+    assert mock_client.run_gemma_diagnosis.called
+    call_args1 = mock_client.run_gemma_diagnosis.call_args[1]
+    from backend.app.config import settings
+    assert call_args1["agent_id"] == settings.EVOLUS_AGENT_CUSTOMS_ID
+
+    # 2. Test explicit agent_id override
+    mock_client.run_gemma_diagnosis.reset_mock()
+    custom_guid = "11111111-2222-3333-4444-555555555555"
+    res2 = await orch.analyze_shipment(shipment.id, agent_id=custom_guid)
+    assert res2.diagnosis.issue_type == "CUSTOMS_HOLD"
+    call_args2 = mock_client.run_gemma_diagnosis.call_args[1]
+    assert call_args2["agent_id"] == custom_guid
+

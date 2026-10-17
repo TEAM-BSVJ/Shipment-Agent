@@ -138,7 +138,7 @@ async def decide_approval(
             if action.exception:
                 action.exception.status = ExceptionStatus.RESOLVED.value
                 action.exception.resolved_at = now_utc
-                action.exception.resolved_by = decision_in.reviewer_id
+                action.exception.resolved_by = str(decision_in.reviewer_id) if decision_in.reviewer_id else None
         else:
             action.status = ActionStatus.REJECTED.value
 

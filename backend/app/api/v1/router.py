@@ -12,6 +12,7 @@ from backend.app.api.v1.audit import router as audit_router
 from backend.app.api.v1.documents import router as documents_router
 from backend.app.api.v1.events import router as events_router
 from backend.app.api.v1.exceptions import router as exceptions_router
+from backend.app.api.v1.integrations import router as integrations_router
 from backend.app.api.v1.notifications import router as notifications_router
 from backend.app.api.v1.shipments import router as shipments_router
 
@@ -26,4 +27,6 @@ api_v1_router.include_router(approvals_router)
 api_v1_router.include_router(audit_router)
 api_v1_router.include_router(notifications_router)
 api_v1_router.include_router(agent_router)
+api_v1_router.include_router(integrations_router)
+
 

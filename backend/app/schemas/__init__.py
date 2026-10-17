@@ -29,6 +29,7 @@ from backend.app.schemas.domain import (
     ExceptionResponse,
     ExceptionStatus,
     ExceptionType,
+    ExceptionUpdate,
     MilestoneBase,
     MilestoneCreate,
     MilestoneName,

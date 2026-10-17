@@ -241,9 +241,32 @@ async def handle_trigger_workflow(
 
     # If already approved by human, proceed with execution
     logger.info("Executing approved workflow '%s' (Run ID: %s)", workflow_name, workflow_run_id)
+    evolus_execution_id = None
+    try:
+        from backend.app.config import settings
+        from backend.app.integrations.evolus_client import EvolusClient
+
+        client = EvolusClient()
+        if client.is_configured:
+            workflow_id_map = {
+                "MISSING_DOCUMENT": settings.EVOLUS_WORKFLOW_MISSING_DOC_ID,
+                "DOCUMENT_RECONCILIATION": settings.EVOLUS_WORKFLOW_DOC_RECONCILIATION_ID,
+                "DISPATCH_DELAY": settings.EVOLUS_WORKFLOW_DISPATCH_DELAY_ID,
+                "WAREHOUSE_DELAY": settings.EVOLUS_WORKFLOW_DISPATCH_DELAY_ID,
+            }
+            target_wf = workflow_id_map.get(workflow_name.upper()) or workflow_name
+            exec_res = await client.execute_workflow(
+                workflow_id=target_wf,
+                input_parameters={"shipment_id": str(shipment_id), **params},
+            )
+            evolus_execution_id = exec_res.get("execution_id")
+    except Exception as exc:
+        logger.warning("Evolus workflow execution fallback: %s", exc)
+
     return {
         "status": "EXECUTED",
         "workflow_run_id": str(workflow_run_id),
+        "evolus_execution_id": evolus_execution_id,
         "shipment_id": str(shipment_id),
         "workflow_name": workflow_name,
         "requires_approval": False,

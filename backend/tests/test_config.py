@@ -15,7 +15,10 @@ def test_default_settings_instantiation():
     assert settings.APP_NAME == "Logistics Bottleneck Resolution Agent"
     assert settings.APP_VERSION == "0.1.0"
     assert settings.API_V1_PREFIX == "/api/v1"
-    assert settings.EVOLUS_MODEL == "gemma4 31B-it"
+    assert settings.EVOLUS_MODEL == "own/qwen3.8-27b"
+    assert settings.EVOLUS_BASE_URL == "https://api.evolus.ai"
+    assert settings.EVOLUS_AGENT_BOTTLENECK_ID == "d0dfc95d-a7e0-4e72-894c-38d097c1c982"
+    assert settings.EVOLUS_WORKFLOW_DOC_RECONCILIATION_ID == "7e1f9f19-1511-4859-ae9c-3b6a9249a6e7"
     assert settings.MAX_UPLOAD_SIZE_BYTES == 10 * 1024 * 1024
     assert not settings.is_production
 

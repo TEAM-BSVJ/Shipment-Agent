@@ -1,7 +1,7 @@
 /**
  * frontend/src/services/agentService.ts
  *
- * API client service for Google Gemma 4 31B-it autonomous reasoning loops
+ * API client service for ShipRAG autonomous reasoning loops
  * and interactive Operational Copilot chat over Evolus AI Platform.
  */
 
@@ -16,7 +16,7 @@ import {
 export const agentService = {
   /**
    * Triggers an end-to-end autonomous reasoning cycle on a shipment.
-   * Assembles freight telemetry, prompts Gemma 4 31B, dispatches allowlisted tools,
+   * Assembles freight telemetry, prompts reasoning LLM, dispatches allowlisted tools,
    * routes to human approvals if consequential, and returns structured diagnosis.
    */
   async analyzeShipment(payload: AgentAnalysisRequest): Promise<AgentAnalysisResponse> {

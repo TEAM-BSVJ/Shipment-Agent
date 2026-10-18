@@ -278,7 +278,7 @@ export default function App() {
         }}
       />
 
-      {/* Interactive Copilot Chat Slide-over Drawer (Gemma 4 31B-it via Evolus AI) */}
+      {/* Interactive Copilot Chat Slide-over Drawer (ShipRAG AI Copilot) */}
       <ChatDrawer
         isOpen={isChatOpen}
         onClose={() => setIsChatOpen(false)}

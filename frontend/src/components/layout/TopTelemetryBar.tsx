@@ -5,7 +5,6 @@ import {
   Search,
   Sparkles,
   Layers,
-  Coins,
   Clock,
   AlertTriangle,
   Building2,
@@ -56,7 +55,7 @@ export const TopTelemetryBar: React.FC<TopTelemetryBarProps> = ({
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-sm font-bold tracking-tight text-white flex items-center gap-1.5 font-mono">
-              <span className="text-cyan-400">AETHERIS</span>
+              <span className="text-cyan-400">ShipRAG</span>
               <span className="text-slateText-primary font-sans font-semibold">FREIGHT COMMAND</span>
             </h1>
             <span className="text-[11px] px-2 py-0.5 rounded-full font-mono font-medium bg-mint-400/15 text-mint-400 border border-mint-400/30 flex items-center gap-1">
@@ -78,16 +77,6 @@ export const TopTelemetryBar: React.FC<TopTelemetryBarProps> = ({
           <span className="text-cyan-300 font-semibold">{utcTime}</span>
           <span className="text-navy-700">|</span>
           <span className="text-slateText-muted">{localTime}</span>
-        </div>
-
-        {/* Evolus AI Platform Credit Meter */}
-        <div className="hidden xl:flex items-center gap-2 px-2.5 py-1 rounded bg-navy-850 border border-navy-700 text-xs">
-          <Coins className="w-3.5 h-3.5 text-violet-400" />
-          <span className="text-slateText-muted font-mono">Evolus AI:</span>
-          <span className="font-mono text-violet-300 font-semibold">48,250 Crd</span>
-          <div className="w-12 h-1.5 rounded-full bg-navy-700 overflow-hidden ml-1">
-            <div className="h-full bg-violet-400 rounded-full w-[96%]" />
-          </div>
         </div>
 
         {/* Global Search Bar (Cmd+K) */}

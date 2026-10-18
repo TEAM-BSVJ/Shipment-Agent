@@ -102,7 +102,7 @@ export const AuditTrailTable: React.FC<AuditTrailTableProps> = ({
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `AETHERIS_Compliance_Audit_${new Date().toISOString().substring(0, 10)}.csv`);
+    link.setAttribute('download', `ShipRAG_Compliance_Audit_${new Date().toISOString().substring(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -147,7 +147,7 @@ export const AuditTrailTable: React.FC<AuditTrailTableProps> = ({
                 className="py-1 px-2.5 bg-navy-850 border border-navy-700 rounded text-slateText-primary focus:outline-none focus:border-cyan-400 text-xs"
               >
                 <option value="ALL">All Actors</option>
-                <option value="AGENT">AGENT (Evolus AI / Gemma 4)</option>
+                <option value="AGENT">AGENT (Autonomous AI)</option>
                 <option value="USER">USER (Operations Lead)</option>
                 <option value="SYSTEM">SYSTEM (Scheduler / Ingestion)</option>
                 <option value="TOOL">TOOL (Allowlisted Handlers)</option>

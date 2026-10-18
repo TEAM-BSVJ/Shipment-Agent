@@ -23,7 +23,7 @@ export const SettingsPage: React.FC = () => {
     setIsPingingEvolus(true);
     setTimeout(() => {
       setIsPingingEvolus(false);
-      setActionNotice('Evolus AI Platform Ping: Connection 200 OK. gemma4 (31B-it) operational with 1.4s response latency.');
+      setActionNotice('AI Engine Ping: Connection 200 OK. Autonomous reasoning engine operational with 1.4s response latency.');
     }, 800);
   };
 
@@ -50,7 +50,7 @@ export const SettingsPage: React.FC = () => {
     setActionNotice(
       !offlineMode
         ? 'Offline Fallback Enabled: All AI diagnostics will now utilize deterministic rule-based explainable risk scorers.'
-        : 'Online Mode Restored: Dual-header Evolus AI client active for Gemma 4 inferences.'
+        : 'Online Mode Restored: Autonomous AI client active for reasoning inferences.'
     );
     setTimeout(() => setActionNotice(null), 5000);
   };
@@ -116,7 +116,7 @@ export const SettingsPage: React.FC = () => {
             </div>
             <div>
               <h3 className="text-sm font-bold text-white font-mono uppercase tracking-wider">
-                Evolus AI Platform Connection (Gemma 4 31B-it)
+                AI Engine Platform Connection
               </h3>
               <p className="text-xs text-slateText-secondary">
                 Dual-header authentication enabled via <code className="text-cyan-400">X-ApiKey</code> and <code className="text-cyan-400">X-Application-Id</code>.
@@ -138,8 +138,8 @@ export const SettingsPage: React.FC = () => {
             <p className="text-white font-bold truncate">https://app.evolus.ai/</p>
           </div>
           <div className="p-3 bg-navy-850 rounded border border-navy-700/60 space-y-1">
-            <span className="text-[10px] text-slateText-muted uppercase">Primary Model</span>
-            <p className="text-violet-300 font-bold truncate">gemma4 (31B-it)</p>
+            <span className="text-[10px] text-slateText-muted uppercase">Engine Mode</span>
+            <p className="text-violet-300 font-bold truncate">Autonomous LLM Routing</p>
           </div>
           <div className="p-3 bg-navy-850 rounded border border-navy-700/60 space-y-1">
             <span className="text-[10px] text-slateText-muted uppercase">Fallback Engine</span>
@@ -151,29 +151,6 @@ export const SettingsPage: React.FC = () => {
           </div>
         </div>
 
-        {/* 50K Credit Balance Meter */}
-        <div className="p-4 bg-navy-850 rounded-md border border-navy-700/80 space-y-2">
-          <div className="flex justify-between items-center text-xs font-mono">
-            <div className="flex items-center gap-2">
-              <span className="text-white font-bold">Allocated Credit Meter:</span>
-              <span className="text-slateText-secondary">Hackathon Grant Allocation</span>
-            </div>
-            <span className="font-bold text-cyan-400">
-              48,250 / 50,000 Credits (96.5% Available)
-            </span>
-          </div>
-          <div className="w-full bg-navy-950 h-2.5 rounded-full overflow-hidden border border-navy-700">
-            <div
-              className="h-full bg-gradient-to-r from-cyan-400 to-mint-400 rounded-full transition-all duration-500"
-              style={{ width: '96.5%' }}
-            />
-          </div>
-          <div className="flex justify-between text-[11px] font-mono text-slateText-muted">
-            <span>0 Credits Consumed</span>
-            <span>Est. 1,750 API calls remaining on current balance</span>
-            <span>50,000 Limit</span>
-          </div>
-        </div>
       </div>
 
       {/* Background Services & Telemetry */}

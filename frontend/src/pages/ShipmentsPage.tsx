@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import {
   Download,
+  Plus,
   RefreshCw,
   Ship,
   Plane,
@@ -16,6 +17,7 @@ import {
 import { shipmentService } from '../services';
 import { Button } from '../components/common';
 import { ShipmentFiltersBar, ShipmentTable } from '../components/dashboard';
+import { CreateShipmentModal } from '../components/shipment';
 import { BENCHMARK_SHIPMENTS } from './Dashboard';
 
 interface ShipmentsPageProps {
@@ -30,6 +32,7 @@ export const ShipmentsPage: React.FC<ShipmentsPageProps> = ({
   const [shipments, setShipments] = useState<Shipment[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
 
   // Filters
   const [searchTerm, setSearchTerm] = useState<string>('');
@@ -110,7 +113,7 @@ export const ShipmentsPage: React.FC<ShipmentsPageProps> = ({
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `AETHERIS_Shipments_Export_${new Date().toISOString().substring(0, 10)}.csv`);
+    link.setAttribute('download', `ShipRAG_Shipments_Export_${new Date().toISOString().substring(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -135,6 +138,14 @@ export const ShipmentsPage: React.FC<ShipmentsPageProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
+          <Button
+            variant="primary"
+            size="sm"
+            leftIcon={<Plus className="w-3.5 h-3.5" />}
+            onClick={() => setIsCreateModalOpen(true)}
+          >
+            New Shipment
+          </Button>
           <Button
             variant="secondary"
             size="sm"
@@ -214,6 +225,16 @@ export const ShipmentsPage: React.FC<ShipmentsPageProps> = ({
         isLoading={isLoading}
         onSelectShipment={onSelectShipment}
         onAnalyzeShipment={onAnalyzeShipment}
+      />
+
+      {/* Register New Shipment Modal */}
+      <CreateShipmentModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onCreated={(newShipment) => {
+          setShipments((prev) => [newShipment, ...prev]);
+          onSelectShipment(newShipment);
+        }}
       />
     </div>
   );

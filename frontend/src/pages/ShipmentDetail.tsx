@@ -367,7 +367,7 @@ export const ShipmentDetail: React.FC<ShipmentDetailProps> = ({
           }`}
         >
           <Sparkles className="w-3.5 h-3.5 text-violet-400" />
-          Gemma 4 Diagnostic Reasoner
+          AI Diagnostic Reasoner
           {latestAnalysis && (
             <span className="w-2 h-2 rounded-full bg-violet-400 animate-pulse" />
           )}
@@ -414,7 +414,7 @@ export const ShipmentDetail: React.FC<ShipmentDetailProps> = ({
                 </div>
                 <div>
                   <h3 className="text-sm font-bold text-white font-mono">
-                    Google Gemma 4 31B-it Diagnostic Inference
+                    AI Diagnostic Inference
                   </h3>
                   <p className="text-xs text-slateText-secondary">
                     Structured root cause analysis, evidence provenance, and allowlisted remediation.
@@ -455,9 +455,9 @@ export const ShipmentDetail: React.FC<ShipmentDetailProps> = ({
                     label: `Evidence Fact #${i + 1}`,
                     value: ev,
                     highlightVariant: i === 0 ? 'coral' : 'cyan',
-                    source: 'Gemma 4 Evaluator',
+                    source: 'AI Evaluator',
                   }))}
-                  provenance="Evolus AI REST Endpoint (`gemma4 31B-it`)"
+                  provenance="ShipRAG AI Intelligence Engine"
                   verifiedAt={new Date().toLocaleTimeString()}
                 />
 
@@ -499,7 +499,7 @@ export const ShipmentDetail: React.FC<ShipmentDetailProps> = ({
                   No Diagnosis Cached for This Shipment
                 </h4>
                 <p className="text-xs text-slateText-secondary mt-1 max-w-sm mx-auto">
-                  Click the button below to query Google Gemma 4 31B-it via Evolus AI to diagnose root causes and suggest recovery workflows.
+                  Click the button below to run an AI diagnosis for root causes and recovery workflows.
                 </p>
                 <Button
                   variant="agent"
@@ -509,7 +509,7 @@ export const ShipmentDetail: React.FC<ShipmentDetailProps> = ({
                   onClick={handleRunDiagnosis}
                   className="mt-3"
                 >
-                  Run Gemma 4 Diagnostic
+                  Run AI Diagnostic
                 </Button>
               </div>
             )}

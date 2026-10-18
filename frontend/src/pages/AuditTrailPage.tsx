@@ -29,9 +29,9 @@ const BENCHMARK_AUDIT_LOGS: AuditLogEntry[] = [
     entity_id: 'e1111111-1111-1111-1111-111111113001',
     action: 'AI_DIAGNOSIS_EXECUTED',
     actor_type: 'AGENT',
-    actor_id: 'Evolus-Gemma4-Agent',
+    actor_id: 'ShipRAG-AI-Agent',
     details: {
-      model: 'gemma4 31B-it',
+      model: 'ShipRAG-Autonomous-LLM',
       prompt_tokens: 840,
       sanitization: '<user_data> fences applied',
       root_cause: 'Pallet tare weight (60 kg) was omitted from Commercial Invoice line items.',
@@ -46,7 +46,7 @@ const BENCHMARK_AUDIT_LOGS: AuditLogEntry[] = [
     entity_id: 'c1111111-1111-1111-1111-111111112001',
     action: 'TOOL_INVOCATION_GATED',
     actor_type: 'AGENT',
-    actor_id: 'Evolus-Gemma4-Agent',
+    actor_id: 'ShipRAG-AI-Agent',
     details: {
       tool_name: 'reschedule_milestone',
       parameters: { milestone_name: 'WAREHOUSE_DISPATCH', rescheduled_hours: 5.0 },

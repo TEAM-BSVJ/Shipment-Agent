@@ -371,7 +371,7 @@ export const ExceptionQueueTable: React.FC<ExceptionQueueTableProps> = ({
                   <div className="mt-3 p-3 rounded bg-navy-900 border border-violet-400/30 text-xs space-y-1">
                     <div className="flex items-center gap-1.5 text-violet-300 font-bold font-mono">
                       <Sparkles className="w-3.5 h-3.5 text-violet-400" />
-                      <span>Evolus AI Root-Cause Diagnosis (Gemma 4 31B-it):</span>
+                      <span>ShipRAG AI Root-Cause Diagnosis:</span>
                     </div>
                     <p className="text-slateText-secondary leading-relaxed font-sans">
                       {exc.root_cause}

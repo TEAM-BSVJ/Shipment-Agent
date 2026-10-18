@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   CheckCircle2,
   Package,
+  Plus,
   RefreshCw,
   Flame,
   ShieldCheck,
@@ -16,6 +17,7 @@ import { Shipment } from '../types';
 import { shipmentService } from '../services';
 import { Button, MetricCard } from '../components/common';
 import { LogisticsMap } from '../components/map';
+import { CreateShipmentModal } from '../components/shipment';
 
 interface DashboardProps {
   onSelectShipment: (shipment: Shipment) => void;
@@ -116,6 +118,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [isScanning, setIsScanning] = useState<boolean>(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
   const [selectedMapShipmentId, setSelectedMapShipmentId] = useState<string | null>(null);
   const [bannerNotice, setBannerNotice] = useState<string | null>(null);
 
@@ -173,7 +176,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `AETHERIS_Shift_Report_${new Date().toISOString().substring(0, 10)}.json`;
+    a.download = `ShipRAG_Shift_Report_${new Date().toISOString().substring(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -196,7 +199,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   }, [shipments]);
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       {/* Top Banner Notice if triggered */}
       {bannerNotice && (
         <div className="p-2.5 bg-navy-850 border border-cyan-400/40 rounded-md text-xs font-mono text-cyan-300 flex items-center justify-between shadow-glow-cyan animate-in fade-in">
@@ -231,6 +234,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
         <div className="flex items-center gap-2">
           <Button
+            variant="primary"
+            size="sm"
+            leftIcon={<Plus className="w-3.5 h-3.5" />}
+            onClick={() => setIsCreateModalOpen(true)}
+          >
+            New Shipment
+          </Button>
+          <Button
             variant="secondary"
             size="sm"
             isLoading={isRefreshing || isLoading}
@@ -240,7 +251,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             Refresh Telemetry
           </Button>
           <Button
-            variant="primary"
+            variant="outline"
             size="sm"
             isLoading={isScanning}
             leftIcon={<Radio className="w-3.5 h-3.5" />}
@@ -498,6 +509,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </Button>
         </div>
       </div>
+
+      {/* Register New Shipment Modal */}
+      <CreateShipmentModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onCreated={(newShipment) => {
+          setShipments((prev) => [newShipment, ...prev]);
+          onSelectShipment(newShipment);
+        }}
+      />
     </div>
   );
 };

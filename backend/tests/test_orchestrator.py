@@ -409,7 +409,8 @@ async def test_orchestrator_copilot_chat_with_grounded_shipment():
     mock_result.scalar_one_or_none.return_value = shipment
     mock_db.execute.return_value = mock_result
 
-    orch = AgentOrchestrator(db=mock_db)
+    client = EvolusClient(config=EvolusConfig(mock_mode=True))
+    orch = AgentOrchestrator(db=mock_db, evolus_client=client)
     res = await orch.chat(
         message="Why is this shipment experiencing an exception?",
         shipment_id=shipment.id,
@@ -426,7 +427,8 @@ async def test_orchestrator_copilot_chat_with_grounded_shipment():
 async def test_orchestrator_copilot_chat_general():
     """Verify general copilot chat without shipment ID returns welcoming guidance."""
     mock_db = AsyncMock()
-    orch = AgentOrchestrator(db=mock_db)
+    client = EvolusClient(config=EvolusConfig(mock_mode=True))
+    orch = AgentOrchestrator(db=mock_db, evolus_client=client)
 
     res = await orch.chat(message="How do I resolve customs holds?")
     assert isinstance(res, AgentChatResponse)

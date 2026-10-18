@@ -100,7 +100,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
           >
             <div className="flex items-center gap-2.5">
               <Sparkles className="w-4 h-4 text-violet-400" />
-              <span>Ask Evolus Copilot (Gemma 4 31B-it)</span>
+              <span>Ask ShipRAG Copilot</span>
             </div>
             <kbd className="text-[10px] font-mono text-violet-300 bg-navy-900 px-1 rounded">Cmd+J</kbd>
           </button>
@@ -170,7 +170,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         {/* Footer */}
         <div className="p-2 border-t border-navy-700 bg-navy-900 flex items-center justify-between text-[11px] text-slateText-muted font-mono">
           <span>Navigate with [↑] [↓] • Select with [Enter]</span>
-          <span>AETHERIS FREIGHT COMMAND</span>
+          <span>ShipRAG FREIGHT COMMAND</span>
         </div>
       </div>
     </div>

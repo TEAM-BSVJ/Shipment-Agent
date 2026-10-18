@@ -43,8 +43,8 @@ export const ChatDrawer: React.FC<ChatDrawerProps> = ({
         {
           role: 'assistant',
           content: selectedShipment
-            ? `Hello! I am your Autonomous Logistics Copilot powered by Google Gemma 4 (31B-it) via Evolus AI. Active telemetry context: ${selectedShipment.tracking_number} (${selectedShipment.origin} → ${selectedShipment.destination}). How can I assist you with this shipment?`
-            : 'Hello! I am your Autonomous Logistics Copilot powered by Google Gemma 4 (31B-it) via Evolus AI. I assist dispatch coordinators with root-cause bottleneck diagnosis, cross-document reconciliation, and allowlisted recovery workflows. What freight scenario would you like to investigate?',
+            ? `Hello! I am your ShipRAG Copilot. Active shipment context: ${selectedShipment.tracking_number} (${selectedShipment.origin} → ${selectedShipment.destination}). How can I assist you with this shipment?`
+            : 'Hello! I am your ShipRAG Copilot. I assist dispatch coordinators with root-cause bottleneck diagnosis, cross-document reconciliation, and allowlisted recovery workflows. What freight scenario would you like to investigate?',
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         },
       ]);
@@ -283,13 +283,13 @@ export const ChatDrawer: React.FC<ChatDrawerProps> = ({
             </div>
             <div>
               <div className="flex items-center gap-1.5">
-                <h3 className="text-sm font-bold text-white font-mono">AETHERIS Copilot</h3>
+                <h3 className="text-sm font-bold text-white font-mono">ShipRAG Copilot</h3>
                 <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-violet-400/20 text-violet-300 font-bold border border-violet-400/40">
-                  Gemma 4 31B-it
+                  AI Online
                 </span>
               </div>
               <p className="text-[11px] text-slateText-muted">
-                Evolus AI · Autonomous Reasoning & Triage
+                Autonomous Logistics Operations
               </p>
             </div>
           </div>
@@ -418,7 +418,7 @@ export const ChatDrawer: React.FC<ChatDrawerProps> = ({
               <div className="w-7 h-7 rounded bg-navy-850 border border-violet-400/40 text-violet-300 flex items-center justify-center">
                 <Sparkles className="w-3.5 h-3.5 animate-spin" />
               </div>
-              <span>Reasoning with Google Gemma 4 31B-it via Evolus AI...</span>
+              <span>Reasoning with ShipRAG AI...</span>
             </div>
           )}
 

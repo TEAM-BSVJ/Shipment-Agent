@@ -24,7 +24,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenChat }) => {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-base font-bold text-slate-900 tracking-tight">
-              Logistics Bottleneck Resolution Agent
+              ShipRAG
             </h1>
             <span className="text-xs px-2 py-0.5 rounded-full font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -41,8 +41,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenChat }) => {
       <div className="flex items-center gap-3">
         <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-md bg-slate-100 border border-slate-200 text-xs font-medium text-slate-700">
           <Bot className="w-3.5 h-3.5 text-violet-600" />
-          <span>Reasoning LLM:</span>
-          <span className="font-mono text-slate-900 font-semibold">gemma4 31B-it (Evolus)</span>
+          <span>AI Engine:</span>
+          <span className="font-mono text-emerald-700 font-semibold">Active</span>
         </div>
 
         <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-md bg-slate-100 border border-slate-200 text-xs font-medium text-slate-700">

@@ -163,7 +163,7 @@ export const RecoveryPlannerPage: React.FC = () => {
   };
 
   const handleExportBriefing = () => {
-    const text = `AETHERIS FREIGHT COMMAND — RECOVERY SCENARIO BRIEFING
+    const text = `ShipRAG FREIGHT COMMAND — RECOVERY SCENARIO BRIEFING
 ==============================================================
 Shipment: ${selectedShipment}
 Simulated Plan: ${activeOptionData.title}
@@ -182,7 +182,7 @@ Compliance: Subject to Lead Dispatcher Approval before booking execution.
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `AETHERIS_Recovery_Briefing_${selectedShipment}_${activeOptionData.id}.txt`;
+    link.download = `ShipRAG_Recovery_Briefing_${selectedShipment}_${activeOptionData.id}.txt`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

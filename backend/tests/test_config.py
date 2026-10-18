@@ -44,3 +44,29 @@ def test_get_settings_cached():
     s1 = get_settings()
     s2 = get_settings()
     assert s1 is s2
+
+
+def test_database_url_normalization(monkeypatch):
+    """Verify postgres:// and postgresql:// are normalized to postgresql+asyncpg://."""
+    monkeypatch.setenv("DATABASE_URL", "postgres://user:pass@host:5432/db")
+    s = Settings()
+    assert s.DATABASE_URL == "postgresql+asyncpg://user:pass@host:5432/db"
+
+    monkeypatch.setenv("DATABASE_URL", "postgresql://user:pass@host:5432/db")
+    s2 = Settings()
+    assert s2.DATABASE_URL == "postgresql+asyncpg://user:pass@host:5432/db"
+
+
+def test_cors_origins_parsing(monkeypatch):
+    """Verify comma-separated and JSON list CORS origin strings parse into lists."""
+    monkeypatch.setenv("CORS_ORIGINS", "https://example.com, https://app.example.com")
+    s = Settings()
+    assert s.CORS_ORIGINS == ["https://example.com", "https://app.example.com"]
+
+    monkeypatch.setenv("CORS_ORIGINS", '["https://test.com"]')
+    s2 = Settings()
+    assert s2.CORS_ORIGINS == ["https://test.com"]
+
+    monkeypatch.setenv("CORS_ORIGINS", "*")
+    s3 = Settings()
+    assert s3.CORS_ORIGINS == ["*"]

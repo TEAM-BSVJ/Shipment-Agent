@@ -5,9 +5,10 @@ Centralized application configuration using Pydantic Settings v2.
 Loads environment variables from .env or system environment with strong typing.
 """
 
+import json
 from functools import lru_cache
-from typing import List, Optional
-from pydantic import Field
+from typing import Any, List, Optional, Union
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -66,13 +67,53 @@ class Settings(BaseSettings):
     NOTIFICATION_PROVIDER: str = Field(default="mock", description="mock | smtp | webhook")
 
     # CORS & Security
-    CORS_ORIGINS: List[str] = Field(
+    CORS_ORIGINS: Union[List[str], str] = Field(
         default_factory=lambda: [
             "http://localhost:5173",
             "http://127.0.0.1:5173",
             "http://localhost:3000",
         ]
     )
+
+    @field_validator("DATABASE_URL", mode="before")
+    @classmethod
+    def normalize_database_url(cls, v: Any) -> Any:
+        """
+        Normalize Render, Neon, Supabase or standard PostgreSQL URIs to use the asyncpg dialect.
+        e.g., 'postgres://' or 'postgresql://' -> 'postgresql+asyncpg://'
+        """
+        if isinstance(v, str) and v.strip():
+            url = v.strip()
+            if url.startswith("postgres://"):
+                return url.replace("postgres://", "postgresql+asyncpg://", 1)
+            elif url.startswith("postgresql://") and not url.startswith("postgresql+asyncpg://"):
+                return url.replace("postgresql://", "postgresql+asyncpg://", 1)
+        return v
+
+    @field_validator("CORS_ORIGINS", mode="after")
+    @classmethod
+    def parse_cors_origins(cls, v: Any) -> List[str]:
+        """
+        Parse comma-separated origins or JSON array strings into a List[str].
+        Supports e.g., 'https://yourdomain.com,https://api.yourdomain.com' or '*'
+        """
+        if isinstance(v, list):
+            return [str(item).strip() for item in v if str(item).strip()]
+        if isinstance(v, str):
+            clean = v.strip()
+            if not clean:
+                return []
+            if clean == "*":
+                return ["*"]
+            if clean.startswith("[") and clean.endswith("]"):
+                try:
+                    parsed = json.loads(clean)
+                    if isinstance(parsed, list):
+                        return [str(item).strip() for item in parsed if str(item).strip()]
+                except Exception:
+                    pass
+            return [origin.strip() for origin in clean.split(",") if origin.strip()]
+        return []
 
     @property
     def is_production(self) -> bool:

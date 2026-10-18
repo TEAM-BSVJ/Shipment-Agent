@@ -1,0 +1,58 @@
+services:
+  # -------------------------------------------------------------
+  # 1. FastAPI Backend Web Service
+  # -------------------------------------------------------------
+  - type: web
+    name: shipment-agent-backend
+    runtime: python
+    plan: free
+    buildCommand: "pip install -r backend/requirements.txt"
+    startCommand: "uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: LOG_LEVEL
+        value: INFO
+      - key: DATABASE_URL
+        fromDatabase:
+          name: shipment-agent-db
+          property: connectionString
+      - key: CORS_ORIGINS
+        value: "*"
+      - key: EVOLUS_BASE_URL
+        value: "https://api.evolus.ai"
+      - key: EVOLUS_API_KEY
+        sync: false
+      - key: EVOLUS_APPLICATION_ID
+        sync: false
+      - key: TOKEN_FACTORY_API_KEY
+        sync: false
+
+  # -------------------------------------------------------------
+  # 2. React / Vite Frontend Static Site
+  # -------------------------------------------------------------
+  - type: web
+    name: shipment-agent-frontend
+    runtime: static
+    rootDir: frontend
+    buildCommand: "npm install && npm run build"
+    staticPublishPath: "./dist"
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: shipment-agent-backend
+          property: host
+
+databases:
+  # -------------------------------------------------------------
+  # 3. Managed PostgreSQL Database
+  # -------------------------------------------------------------
+  - name: shipment-agent-db
+    databaseName: logistics_db
+    user: logistics_user
+    plan: free

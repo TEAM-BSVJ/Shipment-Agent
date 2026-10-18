@@ -29,9 +29,20 @@ logger = logging.getLogger("backend.app.main")
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """
     Application lifespan context manager for startup and shutdown events.
-    Initializes database pools and background schedulers during startup.
+    Initializes database schema and connection pools during startup.
     """
     logger.info("Starting %s v%s in %s mode", settings.APP_NAME, settings.APP_VERSION, settings.APP_ENV)
+    try:
+        from backend.app.db.session import engine
+        from backend.app.models.base import Base
+        import backend.app.models.entities  # noqa: F401 - registers all ORM models with Base.metadata
+
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        logger.info("Database schema verified and initialized.")
+    except Exception as exc:
+        logger.warning("Database schema initialization skipped or failed: %s", exc)
+
     yield
     logger.info("Shutting down %s", settings.APP_NAME)
 

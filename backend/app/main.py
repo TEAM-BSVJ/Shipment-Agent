@@ -33,15 +33,28 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """
     logger.info("Starting %s v%s in %s mode", settings.APP_NAME, settings.APP_VERSION, settings.APP_ENV)
     try:
-        from backend.app.db.session import engine
+        from backend.app.db.session import AsyncSessionLocal, engine
         from backend.app.models.base import Base
         import backend.app.models.entities  # noqa: F401 - registers all ORM models with Base.metadata
+        from backend.app.models.entities import Shipment
+        from sqlalchemy import select
 
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
         logger.info("Database schema verified and initialized.")
+
+        # Auto-seed benchmark data if shipments table is empty
+        async with AsyncSessionLocal() as session:
+            result = await session.execute(select(Shipment.id).limit(1))
+            if result.scalars().first() is None:
+                logger.info("Database is empty. Auto-seeding initial benchmark freight records...")
+                from scripts.seed_db import seed_database
+                counts = await seed_database(session, reset=False)
+                logger.info("Auto-seeding completed successfully: %s", counts)
+            else:
+                logger.info("Database already contains shipment records. Skipping auto-seed.")
     except Exception as exc:
-        logger.warning("Database schema initialization skipped or failed: %s", exc)
+        logger.warning("Database schema initialization or auto-seeding skipped: %s", exc)
 
     yield
     logger.info("Shutting down %s", settings.APP_NAME)
@@ -69,6 +82,20 @@ def create_app() -> FastAPI:
 
     # Mount API v1 Routers
     application.include_router(api_v1_router, prefix=settings.API_V1_PREFIX)
+
+    @application.post("/api/v1/system/seed", tags=["System"])
+    async def trigger_seed(reset: bool = False) -> Dict[str, Any]:
+        """Manual admin endpoint to seed benchmark freight scenarios on cloud platforms."""
+        from backend.app.db.session import AsyncSessionLocal
+        from scripts.seed_db import seed_database
+
+        async with AsyncSessionLocal() as session:
+            counts = await seed_database(session, reset=reset)
+            return {
+                "status": "success",
+                "message": "Database seeded successfully",
+                "counts": counts,
+            }
 
     @application.get("/health", tags=["System"])
     async def health_check() -> Dict[str, Any]:

@@ -462,9 +462,24 @@ class AgentOrchestrator:
         shipment_data: Optional[Dict[str, Any]] = None
         recommended_action: Optional[str] = None
 
-        if shipment_id is not None:
+        import re
+        from sqlalchemy import func
+
+        target_id = shipment_id
+        if target_id is None:
+            # Auto-detect tracking number from user query (e.g., 'SHP-101')
+            match = re.search(r'\b(SHP-\d+)\b', message, re.IGNORECASE)
+            if match:
+                tn = match.group(1).upper()
+                stmt = select(Shipment.id).where(func.upper(Shipment.tracking_number) == tn)
+                if tenant_id:
+                    stmt = stmt.where(Shipment.tenant_id == tenant_id)
+                res = await self.db.execute(stmt)
+                target_id = res.scalars().first()
+
+        if target_id is not None:
             try:
-                shipment = await self._fetch_shipment_record(shipment_id, tenant_id=tenant_id)
+                shipment = await self._fetch_shipment_record(target_id, tenant_id=tenant_id)
                 shipment_data = self._serialize_shipment(shipment)
 
                 grounded_facts.append(f"Shipment {shipment.tracking_number}: {shipment.origin} -> {shipment.destination}")
@@ -478,7 +493,7 @@ class AgentOrchestrator:
                     grounded_facts.append(f"Document ({doc.document_type}): status={doc.validation_status}")
 
             except ShipmentNotFoundError:
-                grounded_facts.append(f"Shipment with ID '{shipment_id}' was not found in database.")
+                grounded_facts.append(f"Shipment with ID '{target_id}' was not found in database.")
 
         prompt = format_copilot_prompt(
             message=message,
@@ -544,7 +559,7 @@ class AgentOrchestrator:
 
         return AgentChatResponse(
             response=response_text,
-            shipment_id=shipment_id,
+            shipment_id=target_id,
             grounded_facts=grounded_facts,
             recommended_action=recommended_action,
         )

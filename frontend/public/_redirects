@@ -1,2 +1,5 @@
-# Cloudflare Pages & Render Static Site SPA rewrite rules
-/*    /index.html   200
+# Cloudflare Pages reverse proxy rule to Render Backend
+/api/*  https://shipment-agent-backend.onrender.com/api/:splat  200
+
+# Cloudflare Pages & Render Static Site SPA rewrite rule
+/*      /index.html                                             200

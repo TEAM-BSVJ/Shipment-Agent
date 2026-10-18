@@ -273,14 +273,16 @@ class EvolusClient:
     async def ask_agent(
         self,
         agent_id: str,
-        content: str,
+        content: str = "",
         conversation_id: Optional[str] = None,
         file_id: Optional[str] = None,
+        question: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Sends a question/prompt to a specialized Evolus agent by GUID via POST /api/v1/agents/{agentId}/ask.
         Returns the MemoryResponse dict containing answer, title, citations, and conversationId.
         """
+        prompt_text = content or question or ""
         if self.config.mock_mode:
             logger.info("EvolusClient mock mode: asking agent %s", agent_id)
             return {
@@ -294,7 +296,7 @@ class EvolusClient:
 
         url = f"{self.config.base_url.rstrip('/')}/api/v1/agents/{agent_id}/ask"
         payload = {
-            "content": content,
+            "content": prompt_text,
             "conversationId": conversation_id,
             "fileId": file_id,
         }

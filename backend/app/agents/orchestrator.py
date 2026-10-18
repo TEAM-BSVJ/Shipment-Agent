@@ -494,7 +494,7 @@ class AgentOrchestrator:
             try:
                 copilot_out = await self.evolus_client.ask_agent(
                     agent_id=settings.EVOLUS_AGENT_COPILOT_ID,
-                    question=prompt,
+                    content=prompt,
                 )
                 if copilot_out and "answer" in copilot_out:
                     ans = str(copilot_out["answer"]).strip()

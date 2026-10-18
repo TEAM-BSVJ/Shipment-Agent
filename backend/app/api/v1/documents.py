@@ -18,6 +18,7 @@ from fastapi import (
     Form,
     Header,
     HTTPException,
+    Query,
     UploadFile,
     status,
 )
@@ -44,6 +45,7 @@ from backend.app.monitoring.risk_scorer import calculate_risk_score
 from backend.app.schemas.domain import (
     DocumentExtractedFields,
     DocumentResponse,
+    DocumentUpdate,
     DomainBaseModel,
 )
 from backend.app.schemas.enums import (
@@ -371,3 +373,90 @@ async def list_shipment_documents(
     res = await db.execute(stmt)
     docs = list(res.scalars().all())
     return [DocumentResponse.model_validate(d) for d in docs]
+
+
+@router.get(
+    "/documents",
+    response_model=List[DocumentResponse],
+    summary="List shipping documents with optional status/shipment filter",
+)
+async def list_documents(
+    status: Optional[DocumentValidationStatus] = Query(default=None, description="Filter by validation status"),
+    shipment_id: Optional[uuid.UUID] = Query(default=None, description="Filter by parent shipment ID"),
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=50, ge=1, le=100),
+    db: AsyncSession = Depends(get_db),
+) -> List[DocumentResponse]:
+    """Retrieves shipping documents across shipments with optional filtering."""
+    stmt = select(ShipmentDocument)
+    if status is not None:
+        stmt = stmt.where(ShipmentDocument.validation_status == status.value)
+    if shipment_id is not None:
+        stmt = stmt.where(ShipmentDocument.shipment_id == shipment_id)
+    stmt = stmt.order_by(ShipmentDocument.created_at.desc()).offset(skip).limit(limit)
+    res = await db.execute(stmt)
+    docs = list(res.scalars().all())
+    return [DocumentResponse.model_validate(d) for d in docs]
+
+
+@router.patch(
+    "/documents/{id}",
+    response_model=DocumentResponse,
+    summary="Update document validation status or confidence (Manual Human Verification)",
+)
+async def update_document(
+    id: uuid.UUID,
+    payload: DocumentUpdate,
+    db: AsyncSession = Depends(get_db),
+    x_tenant_id: Optional[str] = Header(None, alias="X-Tenant-Id"),
+) -> DocumentResponse:
+    """Updates validation status (e.g. human compliance officer approval or rejection)."""
+    stmt = select(ShipmentDocument).where(ShipmentDocument.id == id)
+    res = await db.execute(stmt)
+    doc = res.scalars().first()
+    if not doc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Document with ID '{id}' not found.",
+        )
+
+    if payload.validation_status is not None:
+        val_status_str = (
+            payload.validation_status.value
+            if hasattr(payload.validation_status, "value")
+            else str(payload.validation_status)
+        )
+        doc.validation_status = val_status_str
+        if val_status_str == DocumentValidationStatus.VALIDATED.value:
+            # When human officer validates, raise confidence to at least 0.98
+            doc.confidence = payload.confidence if payload.confidence is not None else max(doc.confidence, 0.98)
+        elif payload.confidence is not None:
+            doc.confidence = payload.confidence
+
+    doc.updated_at = datetime.now(timezone.utc)
+
+    # Stage audit trail for human governance compliance
+    audit_entry = AuditLog(
+        id=uuid.uuid4(),
+        entity_type="shipment_document",
+        entity_id=doc.id,
+        action=(
+            "DOCUMENT_HUMAN_VERIFIED"
+            if doc.validation_status == DocumentValidationStatus.VALIDATED.value
+            else "DOCUMENT_STATUS_UPDATED"
+        ),
+        actor_type="HUMAN_OPERATOR",
+        actor_id="compliance_officer",
+        details={
+            "document_type": doc.document_type,
+            "status": doc.validation_status,
+            "confidence": doc.confidence,
+            "rejection_reason": payload.rejection_reason,
+            "tenant_id": x_tenant_id or str(DEFAULT_TENANT_ID),
+        },
+    )
+    db.add(audit_entry)
+    await db.commit()
+    await db.refresh(doc)
+    return DocumentResponse.model_validate(doc)
+

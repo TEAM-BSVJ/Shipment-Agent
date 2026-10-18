@@ -559,3 +559,77 @@ async def test_list_notifications():
         assert data[0]["template_id"] == "DELAY_ADVISORY"
     finally:
         app.dependency_overrides.clear()
+
+
+@pytest.mark.asyncio
+async def test_list_documents():
+    """Verify GET /api/v1/documents returns shipping documents."""
+    doc = ShipmentDocument(
+        id=uuid.uuid4(),
+        shipment_id=uuid.uuid4(),
+        document_type=DocumentType.COMMERCIAL_INVOICE.value,
+        file_ref="test_invoice.pdf",
+        confidence=0.5,
+        validation_status=DocumentValidationStatus.PENDING.value,
+        created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc),
+    )
+
+    mock_db = AsyncMock()
+    mock_res = MagicMock()
+    mock_res.scalars.return_value.all.return_value = [doc]
+    mock_db.execute.return_value = mock_res
+
+    app.dependency_overrides[get_db] = lambda: mock_db
+    try:
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+            resp = await ac.get("/api/v1/documents?status=PENDING")
+
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == 1
+        assert data[0]["validation_status"] == DocumentValidationStatus.PENDING.value
+        assert data[0]["document_type"] == DocumentType.COMMERCIAL_INVOICE.value
+    finally:
+        app.dependency_overrides.clear()
+
+
+@pytest.mark.asyncio
+async def test_update_document_verification():
+    """Verify PATCH /api/v1/documents/{id} manually validates document and records audit log."""
+    doc_id = uuid.uuid4()
+    doc = ShipmentDocument(
+        id=doc_id,
+        shipment_id=uuid.uuid4(),
+        document_type=DocumentType.CUSTOMS_DECLARATION.value,
+        file_ref="customs_dec.pdf",
+        confidence=0.5,
+        validation_status=DocumentValidationStatus.PENDING.value,
+        created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc),
+    )
+
+    mock_db = AsyncMock()
+    mock_res = MagicMock()
+    mock_res.scalars.return_value.first.return_value = doc
+    mock_db.execute.return_value = mock_res
+
+    app.dependency_overrides[get_db] = lambda: mock_db
+    try:
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+            resp = await ac.patch(
+                f"/api/v1/documents/{doc_id}",
+                json={"validation_status": "VALIDATED"},
+            )
+
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["validation_status"] == DocumentValidationStatus.VALIDATED.value
+        assert data["confidence"] >= 0.98
+
+        # Verify audit log was added
+        added_entities = [call.args[0] for call in mock_db.add.call_args_list if call.args]
+        assert any(isinstance(e, AuditLog) and e.action == "DOCUMENT_HUMAN_VERIFIED" for e in added_entities)
+    finally:
+        app.dependency_overrides.clear()
+

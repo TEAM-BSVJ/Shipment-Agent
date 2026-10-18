@@ -90,6 +90,12 @@ class DocumentCreate(DomainBaseModel):
     expiry_date: Optional[date] = None
 
 
+class DocumentUpdate(DomainBaseModel):
+    validation_status: Optional[DocumentValidationStatus] = None
+    confidence: Optional[float] = Field(default=None, ge=0.0, le=1.0)
+    rejection_reason: Optional[str] = None
+
+
 class DocumentResponse(DomainBaseModel):
     id: UUID = Field(default_factory=uuid4)
     shipment_id: UUID

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import {
   AlertTriangle,
+  CheckCircle2,
   FileCheck,
   FileText,
   FileWarning,
@@ -28,6 +29,22 @@ export const DocumentPanel: React.FC<DocumentPanelProps> = ({
 }) => {
   const [isUploadOpen, setIsUploadOpen] = useState<boolean>(false);
   const [extractingId, setExtractingId] = useState<string | null>(null);
+  const [verifyingId, setVerifyingId] = useState<string | null>(null);
+
+  const handleVerify = async (docId: string) => {
+    setVerifyingId(docId);
+    try {
+      await documentService.updateDocument(docId, {
+        validation_status: 'VALIDATED',
+        confidence: 0.98,
+      });
+      onRefresh();
+    } catch (err) {
+      console.error('Document verification failed:', err);
+    } finally {
+      setVerifyingId(null);
+    }
+  };
 
   const handleExtract = async (docId: string) => {
     setExtractingId(docId);
@@ -197,16 +214,31 @@ export const DocumentPanel: React.FC<DocumentPanelProps> = ({
                     Confidence: <span className="text-cyan-400 font-semibold">{(doc.confidence * 100).toFixed(0)}%</span>
                   </span>
 
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    isLoading={isExtracting}
-                    leftIcon={<RefreshCw className="w-3 h-3 text-cyan-400" />}
-                    onClick={() => handleExtract(doc.id)}
-                    className="text-[11px] py-1 px-2 text-cyan-400 hover:text-cyan-300"
-                  >
-                    Re-Extract
-                  </Button>
+                  <div className="flex items-center gap-1.5">
+                    {doc.validation_status === 'PENDING' && (
+                      <Button
+                        variant="mint"
+                        size="sm"
+                        isLoading={verifyingId === doc.id}
+                        leftIcon={<CheckCircle2 className="w-3 h-3 text-mint-950" />}
+                        onClick={() => handleVerify(doc.id)}
+                        className="text-[11px] py-1 px-2.5 font-semibold shadow-glow-mint"
+                      >
+                        Verify
+                      </Button>
+                    )}
+
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      isLoading={isExtracting}
+                      leftIcon={<RefreshCw className="w-3 h-3 text-cyan-400" />}
+                      onClick={() => handleExtract(doc.id)}
+                      className="text-[11px] py-1 px-2 text-cyan-400 hover:text-cyan-300"
+                    >
+                      Re-Extract
+                    </Button>
+                  </div>
                 </div>
               </div>
             );

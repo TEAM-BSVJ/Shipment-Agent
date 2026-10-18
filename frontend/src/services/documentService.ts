@@ -50,4 +50,22 @@ export const documentService = {
   async getShipmentDocuments(shipmentId: string): Promise<ShipmentDocument[]> {
     return api.get<ShipmentDocument[]>(`/shipments/${shipmentId}/documents`);
   },
+
+  /**
+   * Retrieves all documents, optionally filtered by validation status.
+   */
+  async getDocuments(params?: { status?: string; shipment_id?: string }): Promise<ShipmentDocument[]> {
+    return api.get<ShipmentDocument[]>('/documents', params);
+  },
+
+  /**
+   * Updates document validation status (e.g. manual verification by human operator).
+   */
+  async updateDocument(
+    documentId: string,
+    payload: { validation_status: string; confidence?: number; rejection_reason?: string }
+  ): Promise<ShipmentDocument> {
+    return api.patch<ShipmentDocument>(`/documents/${documentId}`, payload);
+  },
 };
+

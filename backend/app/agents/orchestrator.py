@@ -225,8 +225,19 @@ class AgentOrchestrator:
                 }
 
         elif tool_key == ToolName.ESCALATE_TO_HUMAN.value:
-            if "reason" not in sanitized or len(sanitized["reason"]) < 5:
-                sanitized["reason"] = "Unresolved shipment anomaly requires human supervisor evaluation"
+            if "reason" not in sanitized or len(str(sanitized["reason"])) < 5:
+                sanitized["reason"] = sanitized.get("description") or sanitized.get("root_cause") or "Unresolved shipment anomaly requires human supervisor evaluation"
+            if "urgency" not in sanitized and "severity" in sanitized:
+                sanitized["urgency"] = sanitized["severity"]
+
+        # Prune any extraneous context keys that the LLM might have provided so it conforms to the strict tool schema (RULE-E02)
+        try:
+            tool_def = self.registry.get(tool_key)
+            if tool_def and hasattr(tool_def.input_schema, "model_fields"):
+                allowed_fields = set(tool_def.input_schema.model_fields.keys())
+                sanitized = {k: v for k, v in sanitized.items() if k in allowed_fields}
+        except Exception as e:
+            logger.warning("Could not prune fields for tool %s: %s", tool_key, e)
 
         return sanitized
 

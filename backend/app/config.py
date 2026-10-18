@@ -39,8 +39,8 @@ class Settings(BaseSettings):
     EVOLUS_APPLICATION_ID: str = Field(default="")
     EVOLUS_MODEL: str = Field(default="own/qwen3.8-27b")
     EVOLUS_WORKFLOW_ID: Optional[str] = Field(default=None)
-    EVOLUS_TIMEOUT_SECONDS: float = Field(default=30.0)
-    EVOLUS_MAX_RETRIES: int = Field(default=2)
+    EVOLUS_TIMEOUT_SECONDS: float = Field(default=120.0)
+    EVOLUS_MAX_RETRIES: int = Field(default=1)
 
     # Evolus Specialized Agent GUIDs
     EVOLUS_AGENT_BOTTLENECK_ID: Optional[str] = Field(default="d0dfc95d-a7e0-4e72-894c-38d097c1c982")

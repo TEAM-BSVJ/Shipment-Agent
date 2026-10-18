@@ -115,7 +115,7 @@ class DocumentParser:
           - Declared Value & Currency
           - Issue Date
         """
-        raw_snippet = text_content[:500].strip() if text_content else None
+        raw_snippet = text_content[:500].strip().replace("\x00", "") if text_content else None
 
         invoice_num = cls._extract_invoice_number(text_content)
         consignee = cls._extract_consignee(text_content)

@@ -436,11 +436,17 @@ class EvolusClient:
                     else:
                         raw_content = str(data)
                     
-                    # Clean markdown codeblocks if model inadvertently wrapped json
-                    cleaned = re.sub(r"^```(?:json)?\s*", "", raw_content.strip())
-                    cleaned = re.sub(r"\s*```$", "", cleaned)
+                    # Extract JSON object from raw response (handles conversational preamble or markdown wrapping)
+                    json_str = raw_content.strip()
+                    codeblock_match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", raw_content, re.DOTALL)
+                    if codeblock_match:
+                        json_str = codeblock_match.group(1).strip()
+                    else:
+                        brace_match = re.search(r"(\{.*\})", raw_content, re.DOTALL)
+                        if brace_match:
+                            json_str = brace_match.group(1).strip()
 
-                    validated = AgentDiagnosticOutput.model_validate_json(cleaned)
+                    validated = AgentDiagnosticOutput.model_validate_json(json_str)
                     return validated
 
                 except (httpx.HTTPError, KeyError, json.JSONDecodeError, ValueError) as exc:

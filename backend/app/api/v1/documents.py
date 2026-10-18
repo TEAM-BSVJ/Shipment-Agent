@@ -184,15 +184,28 @@ async def extract_document(
     # 2. Determine raw text
     raw_text = payload.raw_text if payload and payload.raw_text else None
     if not raw_text:
-        # Attempt to read text if the file exists and is text readable
         file_path = Path(doc.file_ref)
         if file_path.exists():
-            try:
-                raw_text = file_path.read_text(encoding="utf-8", errors="ignore")
-            except Exception:
-                raw_text = ""
+            suffix = file_path.suffix.lower()
+            if suffix in [".txt", ".csv", ".json", ".xml", ".html", ".md"]:
+                try:
+                    raw_text = file_path.read_text(encoding="utf-8", errors="ignore")
+                except Exception:
+                    raw_text = ""
+            elif suffix in [".png", ".jpg", ".jpeg", ".webp"]:
+                # Binary images: avoid reading binary null bytes (\x00) directly into text
+                raw_text = f"Uploaded image document: {file_path.name}"
+            else:
+                try:
+                    raw_text = file_path.read_text(encoding="utf-8", errors="ignore")
+                except Exception:
+                    raw_text = f"Uploaded document: {file_path.name}"
         else:
             raw_text = ""
+
+    # Sanitize any null bytes (\x00) to protect PostgreSQL JSONB from 'unsupported Unicode escape sequence'
+    if raw_text:
+        raw_text = raw_text.replace("\x00", "")
 
     doc_type_enum = DocumentType(doc.document_type) if doc.document_type in [t.value for t in DocumentType] else DocumentType.OTHER
 

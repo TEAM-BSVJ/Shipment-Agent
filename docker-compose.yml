@@ -1,0 +1,98 @@
+services:
+  # ---------------------------------------------------------------------------
+  # 1. PostgreSQL Database Service
+  # ---------------------------------------------------------------------------
+  db:
+    image: postgres:16-alpine
+    container_name: shipment_agent_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: logistics_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "${POSTGRES_PORT:-5433}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d logistics_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - shipment_network
+
+  # ---------------------------------------------------------------------------
+  # 2. FastAPI Backend Service
+  # ---------------------------------------------------------------------------
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: shipment_agent_backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    environment:
+      APP_ENV: production
+      LOG_LEVEL: INFO
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/logistics_db
+      CORS_ORIGINS: '["http://localhost:3000","http://localhost:5173","http://localhost:80","http://127.0.0.1:3000"]'
+      EVOLUS_BASE_URL: ${EVOLUS_BASE_URL:-https://api.evolus.ai}
+      EVOLUS_API_KEY: ${EVOLUS_API_KEY:-evo_zYDd77Do1fEMhMlvqGb9532m9x8BFFZJ6ugwbgVD}
+      EVOLUS_APPLICATION_ID: ${EVOLUS_APPLICATION_ID:-1367d57b-6200-4565-bb7f-255056523368}
+      EVOLUS_MODEL: ${EVOLUS_MODEL:-own/qwen3.8-27b}
+      EVOLUS_MOCK_MODE: ${EVOLUS_MOCK_MODE:-false}
+    volumes:
+      - document_storage:/app/data/documents
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    networks:
+      - shipment_network
+
+  # ---------------------------------------------------------------------------
+  # 3. React / Vite Frontend (Nginx Production Reverse Proxy)
+  # ---------------------------------------------------------------------------
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ""
+    container_name: shipment_agent_frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "3000:80"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:80/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    networks:
+      - shipment_network
+
+# -----------------------------------------------------------------------------
+# Persistent Volumes & Network Definitions
+# -----------------------------------------------------------------------------
+volumes:
+  postgres_data:
+    name: shipment_agent_postgres_data
+  document_storage:
+    name: shipment_agent_documents
+
+networks:
+  shipment_network:
+    name: shipment_agent_network
+    driver: bridge

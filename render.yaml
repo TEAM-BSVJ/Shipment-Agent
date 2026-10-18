@@ -4,10 +4,11 @@ services:
   # -------------------------------------------------------------
   - type: web
     name: shipment-agent-backend
-    runtime: python
+    runtime: docker
     plan: free
-    buildCommand: "pip install -r backend/requirements.txt"
-    startCommand: "uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT"
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
     envVars:
       - key: APP_ENV
         value: production

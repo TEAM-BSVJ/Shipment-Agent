@@ -215,8 +215,26 @@ async def extract_document(
         document_type=doc_type_enum,
     )
     doc.extracted_fields = extracted_fields.model_dump(mode="json")
-    doc.confidence = 0.95 if (extracted_fields.total_weight_kg or extracted_fields.invoice_number) else 0.50
-    doc.validation_status = DocumentValidationStatus.VALIDATED.value
+    # Proportional confidence scoring based on extracted field completeness
+    populated_fields = [
+        extracted_fields.invoice_number,
+        extracted_fields.total_weight_kg,
+        extracted_fields.consignee,
+        extracted_fields.declared_value,
+        extracted_fields.issuer,
+        extracted_fields.issue_date,
+    ]
+    field_count = sum(1 for f in populated_fields if f is not None)
+    if field_count >= 3:
+        doc.confidence = 0.95
+        doc.validation_status = DocumentValidationStatus.VALIDATED.value
+    elif field_count >= 1:
+        doc.confidence = 0.85
+        doc.validation_status = DocumentValidationStatus.VALIDATED.value
+    else:
+        # No text fields extracted (e.g. raw binary image without OCR text)
+        doc.confidence = 0.50
+        doc.validation_status = DocumentValidationStatus.PENDING.value
 
     # 4. Cross-Document Reconciliation for the parent shipment
     shipment_stmt = (
